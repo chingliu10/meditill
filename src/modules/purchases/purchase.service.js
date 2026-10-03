@@ -1,7 +1,195 @@
-const {withTransaction}=require('../../config/db');const repo=require('./purchase.repository');const {nextDocumentNumber}=require('../../shared/document-number');const {appError}=require('../../shared/app-error');const METHODS=new Set(['CASH','MOBILE_MONEY','CARD','BANK']);
-function normalizeItems(input){const source=input?.items||[];const raw=Array.isArray(source)?source:Object.values(source);return raw.map(i=>({medicineId:Number(i.medicine_id),quantity:Number(i.quantity),unitCost:Number(i.unit_cost),sellingPrice:i.selling_price===''||i.selling_price==null?null:Number(i.selling_price),batchNumber:String(i.batch_number||'').trim(),manufacturingDate:i.manufacturing_date||null,expiryDate:i.expiry_date||null})).filter(i=>Number.isInteger(i.medicineId)&&i.medicineId>0&&Number.isFinite(i.quantity)&&i.quantity>0&&Number.isFinite(i.unitCost)&&i.unitCost>=0);}
-async function receivePurchase(input,context){const items=normalizeItems(input);if(!items.length)throw appError('At least one valid purchase item is required');const purchaseDate=String(input.purchase_date||'').trim();if(purchaseDate){const today=new Date();const yyyy=today.getFullYear(),mm=String(today.getMonth()+1).padStart(2,'0'),dd=String(today.getDate()).padStart(2,'0');const localToday=`${yyyy}-${mm}-${dd}`;if(purchaseDate>localToday)throw appError('Purchase date cannot be in the future');}return withTransaction(async client=>{for(const item of items){const m=await repo.medicineRule(client,context.user.organization_id,item.medicineId);if(!m)throw appError('Medicine not found');if(!m.allow_fraction&&!Number.isInteger(item.quantity))throw appError(`${m.name} requires a whole-number quantity`);if(item.expiryDate&&item.expiryDate<new Date().toISOString().slice(0,10))throw appError('Cannot receive already expired stock');if(item.manufacturingDate&&item.expiryDate&&item.manufacturingDate>item.expiryDate)throw appError('Manufacturing date cannot be after expiry');}const number=await nextDocumentNumber(client,context.user.organization_id,context.branch.id,'PURCHASE','PUR'),subtotal=items.reduce((s,i)=>s+i.quantity*i.unitCost,0),discount=Math.max(0,Number(input.discount||0)),tax=Math.max(0,Number(input.tax||0)),total=Math.max(0,subtotal-discount+tax);const p=await repo.insertPurchase(client,{organizationId:context.user.organization_id,branchId:context.branch.id,userId:context.user.id,supplierId:Number(input.supplier_id)||null,purchaseNumber:number,supplierInvoiceNumber:input.supplier_invoice_number,purchaseDate:input.purchase_date||null,subtotal,discount,tax,total,paymentStatus:'UNPAID',notes:input.notes});for(const item of items){const pi=await repo.insertItem(client,p.id,item);const b=await repo.createBatch(client,{organizationId:context.user.organization_id,branchId:context.branch.id},item,pi.id);await repo.stockMovement(client,{organizationId:context.user.organization_id,branchId:context.branch.id,userId:context.user.id},b,item,p.id);}return p;});}
-async function addPayment(id,input,ctx){const amount=Number(input.amount),method=String(input.payment_method||'').toUpperCase();if(!METHODS.has(method)||!Number.isFinite(amount)||amount<=0)throw appError('Valid payment method and amount are required');return withTransaction(async client=>{const d=await repo.detail(client,ctx.user.organization_id,ctx.branch.id,id,true);if(!d)throw appError('Purchase not found',404);const paid=await repo.paidTotal(client,id),returned=d.returns.reduce((s,r)=>s+Number(r.total_value),0),netTotal=Math.max(0,Number(d.purchase.total)-returned),remaining=netTotal-paid;if(amount>remaining+0.01)throw appError('Payment exceeds outstanding balance');let registerSessionId=null;if(method==='CASH'){const session=await repo.openRegister(client,ctx.user.id,ctx.branch.id);if(!session)throw appError('Open a register before paying a supplier in cash',409);registerSessionId=session.id;}const p=await repo.addPayment(client,{purchaseId:id,registerSessionId,method,amount,reference:String(input.reference||'').trim(),userId:ctx.user.id});if(registerSessionId)await repo.cashOut(client,registerSessionId,amount,id,ctx.user.id);await repo.paymentStatus(client,id,paid+amount>=netTotal-0.01?'PAID':'PARTIAL');return p;});}
-function normalizeReturns(input){const raw=Array.isArray(input.items)?input.items:Object.values(input.items||{});return raw.map(x=>({purchaseItemId:Number(x.purchase_item_id),batchId:Number(x.batch_id),quantity:Number(x.quantity)})).filter(x=>x.purchaseItemId&&x.batchId&&Number.isFinite(x.quantity)&&x.quantity>0);}
-async function createReturn(id,input,ctx){const lines=normalizeReturns(input),reason=String(input.reason||'').trim();if(!lines.length||!reason)throw appError('Return quantity and reason are required');return withTransaction(async client=>{const d=await repo.detail(client,ctx.user.organization_id,ctx.branch.id,id,true);if(!d)throw appError('Purchase not found',404);const itemMap=new Map(d.items.map(x=>[Number(x.id),x]));let total=0;const work=[];for(const l of lines){const item=itemMap.get(l.purchaseItemId);if(!item||Number(item.batch_id)!==l.batchId)throw appError('Invalid purchase item');const rule=await repo.medicineRule(client,ctx.user.organization_id,item.medicine_id);if(rule&&!rule.allow_fraction&&!Number.isInteger(l.quantity))throw appError(`${item.name} requires a whole-number return quantity`);const b=await repo.lockBatch(client,l.batchId,ctx.branch.id);if(!b||l.quantity>Number(b.quantity_available))throw appError(`Return quantity exceeds stock for ${item.name}`);total+=l.quantity*Number(item.unit_cost);work.push({line:l,item,b});}const number=await nextDocumentNumber(client,ctx.user.organization_id,ctx.branch.id,'PURCHASE_RETURN','PRT'),ret=await repo.createReturn(client,{organizationId:ctx.user.organization_id,branchId:ctx.branch.id,purchaseId:id,number,reason,total,userId:ctx.user.id});for(const w of work){await repo.returnItem(client,{returnId:ret.id,purchaseItemId:w.item.id,batchId:w.b.id,quantity:w.line.quantity,cost:Number(w.item.unit_cost)});await repo.deductBatch(client,w.b.id,w.line.quantity);await repo.returnMovement(client,{organizationId:ctx.user.organization_id,branchId:ctx.branch.id,medicineId:w.item.medicine_id,batchId:w.b.id,quantity:w.line.quantity,cost:Number(w.item.unit_cost),returnId:ret.id,reason,userId:ctx.user.id});}const paid=await repo.paidTotal(client,id),newReturned=d.returns.reduce((s,r)=>s+Number(r.total_value),0)+total,netTotal=Math.max(0,Number(d.purchase.total)-newReturned);await repo.paymentStatus(client,id,paid>=netTotal-0.01?'PAID':paid>0?'PARTIAL':'UNPAID');return ret;});}
+const {withTransaction}=require('../../config/db');
+const repo=require('./purchase.repository');
+const {nextDocumentNumber}=require('../../shared/document-number');
+const {appError}=require('../../shared/app-error');
+const METHODS=new Set(['CASH','MOBILE_MONEY','CARD','BANK']);
+
+function normalizeItems(input){
+  const source=input?.items||[];
+  const raw=Array.isArray(source)?source:Object.values(source);
+  return raw.map(i=>({
+    medicineId:Number(i.medicine_id),
+    quantity:Number(i.quantity),
+    unitCost:Number(i.unit_cost),
+    sellingPrice:i.selling_price===''||i.selling_price==null?null:Number(i.selling_price),
+    batchNumber:String(i.batch_number||'').trim(),
+    manufacturingDate:i.manufacturing_date||null,
+    expiryDate:i.expiry_date||null
+  })).filter(i=>
+    Number.isInteger(i.medicineId)&&i.medicineId>0&&
+    Number.isFinite(i.quantity)&&i.quantity>0&&
+    Number.isFinite(i.unitCost)&&i.unitCost>=0
+  );
+}
+
+async function receivePurchase(input,context){
+  const items=normalizeItems(input);
+  if(!items.length) throw appError('At least one valid purchase item is required');
+
+  return withTransaction(async client=>{
+    const clock=await repo.businessClock(client,context.user.organization_id);
+    const businessDate=clock.business_date;
+    const purchaseDate=String(input.purchase_date||businessDate||'').trim();
+
+    if(!businessDate){
+      throw appError('Organization business date could not be determined',500);
+    }
+    if(purchaseDate>businessDate){
+      throw appError(`Purchase date cannot be after today (${businessDate}, ${clock.timezone})`);
+    }
+
+    for(const item of items){
+      const medicine=await repo.medicineRule(client,context.user.organization_id,item.medicineId);
+      if(!medicine) throw appError('Medicine not found');
+      if(!medicine.allow_fraction&&!Number.isInteger(item.quantity)){
+        throw appError(`${medicine.name} requires a whole-number quantity`);
+      }
+      if(item.expiryDate&&item.expiryDate<businessDate){
+        throw appError(`Cannot receive already expired stock for ${medicine.name}`);
+      }
+      if(item.manufacturingDate&&item.expiryDate&&item.manufacturingDate>item.expiryDate){
+        throw appError('Manufacturing date cannot be after expiry');
+      }
+    }
+
+    const number=await nextDocumentNumber(
+      client,
+      context.user.organization_id,
+      context.branch.id,
+      'PURCHASE',
+      'PUR'
+    );
+
+    const subtotal=items.reduce((sum,item)=>sum+item.quantity*item.unitCost,0);
+    const discount=Math.max(0,Number(input.discount||0));
+    const tax=Math.max(0,Number(input.tax||0));
+    const total=Math.max(0,subtotal-discount+tax);
+
+    const purchase=await repo.insertPurchase(client,{
+      organizationId:context.user.organization_id,
+      branchId:context.branch.id,
+      userId:context.user.id,
+      supplierId:Number(input.supplier_id)||null,
+      purchaseNumber:number,
+      supplierInvoiceNumber:input.supplier_invoice_number,
+      purchaseDate,
+      subtotal,
+      discount,
+      tax,
+      total,
+      paymentStatus:'UNPAID',
+      notes:input.notes
+    });
+
+    for(const item of items){
+      const purchaseItem=await repo.insertItem(client,purchase.id,item);
+      const batch=await repo.createBatch(
+        client,
+        {organizationId:context.user.organization_id,branchId:context.branch.id},
+        item,
+        purchaseItem.id
+      );
+      await repo.stockMovement(
+        client,
+        {organizationId:context.user.organization_id,branchId:context.branch.id,userId:context.user.id},
+        batch,
+        item,
+        purchase.id
+      );
+    }
+
+    return purchase;
+  });
+}
+
+async function addPayment(id,input,ctx){
+  const amount=Number(input.amount),method=String(input.payment_method||'').toUpperCase();
+  if(!METHODS.has(method)||!Number.isFinite(amount)||amount<=0) throw appError('Valid payment method and amount are required');
+  return withTransaction(async client=>{
+    const d=await repo.detail(client,ctx.user.organization_id,ctx.branch.id,id,true);
+    if(!d) throw appError('Purchase not found',404);
+    const paid=await repo.paidTotal(client,id);
+    const returned=d.returns.reduce((s,r)=>s+Number(r.total_value),0);
+    const netTotal=Math.max(0,Number(d.purchase.total)-returned);
+    const remaining=netTotal-paid;
+    if(amount>remaining+0.01) throw appError('Payment exceeds outstanding balance');
+    let registerSessionId=null;
+    if(method==='CASH'){
+      const session=await repo.openRegister(client,ctx.user.id,ctx.branch.id);
+      if(!session) throw appError('Open a register before paying a supplier in cash',409);
+      registerSessionId=session.id;
+    }
+    const p=await repo.addPayment(client,{purchaseId:id,registerSessionId,method,amount,reference:String(input.reference||'').trim(),userId:ctx.user.id});
+    if(registerSessionId) await repo.cashOut(client,registerSessionId,amount,id,ctx.user.id);
+    await repo.paymentStatus(client,id,paid+amount>=netTotal-0.01?'PAID':'PARTIAL');
+    return p;
+  });
+}
+
+function normalizeReturns(input){
+  const raw=Array.isArray(input.items)?input.items:Object.values(input.items||{});
+  return raw.map(x=>({purchaseItemId:Number(x.purchase_item_id),batchId:Number(x.batch_id),quantity:Number(x.quantity)}))
+    .filter(x=>x.purchaseItemId&&x.batchId&&Number.isFinite(x.quantity)&&x.quantity>0);
+}
+
+async function createReturn(id,input,ctx){
+  const lines=normalizeReturns(input),reason=String(input.reason||'').trim();
+  if(!lines.length||!reason) throw appError('Return quantity and reason are required');
+  return withTransaction(async client=>{
+    const d=await repo.detail(client,ctx.user.organization_id,ctx.branch.id,id,true);
+    if(!d) throw appError('Purchase not found',404);
+    const itemMap=new Map(d.items.map(x=>[Number(x.id),x]));
+    let total=0;
+    const work=[];
+
+    for(const line of lines){
+      const item=itemMap.get(line.purchaseItemId);
+      if(!item||Number(item.batch_id)!==line.batchId) throw appError('Invalid purchase item');
+      const rule=await repo.medicineRule(client,ctx.user.organization_id,item.medicine_id);
+      if(rule&&!rule.allow_fraction&&!Number.isInteger(line.quantity)){
+        throw appError(`${item.name} requires a whole-number return quantity`);
+      }
+      const batch=await repo.lockBatch(client,line.batchId,ctx.branch.id);
+      if(!batch||line.quantity>Number(batch.quantity_available)){
+        throw appError(`Return quantity exceeds stock for ${item.name}`);
+      }
+      total+=line.quantity*Number(item.unit_cost);
+      work.push({line,item,batch});
+    }
+
+    const number=await nextDocumentNumber(client,ctx.user.organization_id,ctx.branch.id,'PURCHASE_RETURN','PRT');
+    const ret=await repo.createReturn(client,{
+      organizationId:ctx.user.organization_id,
+      branchId:ctx.branch.id,
+      purchaseId:id,
+      number,
+      reason,
+      total,
+      userId:ctx.user.id
+    });
+
+    for(const w of work){
+      await repo.returnItem(client,{returnId:ret.id,purchaseItemId:w.item.id,batchId:w.batch.id,quantity:w.line.quantity,cost:Number(w.item.unit_cost)});
+      await repo.deductBatch(client,w.batch.id,w.line.quantity);
+      await repo.returnMovement(client,{
+        organizationId:ctx.user.organization_id,
+        branchId:ctx.branch.id,
+        medicineId:w.item.medicine_id,
+        batchId:w.batch.id,
+        quantity:w.line.quantity,
+        cost:Number(w.item.unit_cost),
+        returnId:ret.id,
+        reason,
+        userId:ctx.user.id
+      });
+    }
+
+    const paid=await repo.paidTotal(client,id);
+    const newReturned=d.returns.reduce((s,r)=>s+Number(r.total_value),0)+total;
+    const netTotal=Math.max(0,Number(d.purchase.total)-newReturned);
+    await repo.paymentStatus(client,id,paid>=netTotal-0.01?'PAID':paid>0?'PARTIAL':'UNPAID');
+    return ret;
+  });
+}
+
 module.exports={receivePurchase,addPayment,createReturn};

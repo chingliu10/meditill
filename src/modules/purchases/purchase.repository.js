@@ -1,5 +1,16 @@
 async function list(db,organizationId,branchId){const {rows}=await db.query(`SELECT p.id,p.purchase_number,p.purchase_date,p.total,p.status,p.payment_status,s.name supplier FROM purchases p LEFT JOIN suppliers s ON s.id=p.supplier_id WHERE p.organization_id=$1 AND p.branch_id=$2 ORDER BY p.purchase_date DESC LIMIT 100`,[organizationId,branchId]);return rows;}
 async function masters(db,organizationId){const suppliers=await db.query('SELECT id,name FROM suppliers WHERE organization_id=$1 AND active=true ORDER BY name LIMIT 20',[organizationId]);return {suppliers:suppliers.rows};}
+async function businessClock(db,organizationId){
+  const {rows}=await db.query(
+    `SELECT timezone,
+            to_char(now() AT TIME ZONE timezone,'YYYY-MM-DD') business_date
+     FROM organizations
+     WHERE id=$1
+     LIMIT 1`,
+    [organizationId]
+  );
+  return rows[0]||{timezone:'Africa/Dar_es_Salaam',business_date:null};
+}
 async function medicineRule(db,organizationId,medicineId){const {rows}=await db.query(`SELECT m.id,m.name,u.name unit_name,u.symbol unit,COALESCE(u.allow_fraction,false) allow_fraction FROM medicines m LEFT JOIN units u ON u.id=m.base_unit_id WHERE m.organization_id=$1 AND m.id=$2 AND m.active=true LIMIT 1`,[organizationId,medicineId]);return rows[0]||null;}
 async function insertPurchase(db,data){const {rows}=await db.query(`INSERT INTO purchases(organization_id,branch_id,supplier_id,purchase_number,supplier_invoice_number,purchase_date,subtotal,discount,tax,total,status,payment_status,notes,created_by,received_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'RECEIVED',$11,$12,$13,now()) RETURNING *`,[data.organizationId,data.branchId,data.supplierId||null,data.purchaseNumber,data.supplierInvoiceNumber||null,data.purchaseDate||new Date(),data.subtotal,data.discount,data.tax,data.total,data.paymentStatus,data.notes||null,data.userId]);return rows[0];}
 async function insertItem(db,purchaseId,item){const {rows}=await db.query(`INSERT INTO purchase_items(purchase_id,medicine_id,quantity,unit_cost,selling_price,batch_number,manufacturing_date,expiry_date,line_total) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,[purchaseId,item.medicineId,item.quantity,item.unitCost,item.sellingPrice||null,item.batchNumber||null,item.manufacturingDate||null,item.expiryDate||null,item.quantity*item.unitCost]);return rows[0];}
@@ -16,4 +27,4 @@ async function createReturn(db,d){const {rows}=await db.query(`INSERT INTO purch
 async function returnItem(db,d){await db.query(`INSERT INTO purchase_return_items(purchase_return_id,purchase_item_id,batch_id,quantity,unit_cost,line_total) VALUES($1,$2,$3,$4,$5,$6)`,[d.returnId,d.purchaseItemId,d.batchId,d.quantity,d.cost,d.quantity*d.cost]);}
 async function deductBatch(db,batchId,qty){await db.query(`UPDATE medicine_batches SET quantity_available=quantity_available-$2,status=CASE WHEN quantity_available-$2=0 THEN 'DEPLETED' ELSE status END WHERE id=$1`,[batchId,qty]);}
 async function returnMovement(db,d){await db.query(`INSERT INTO stock_movements(organization_id,branch_id,medicine_id,batch_id,movement_type,quantity,unit_cost,reference_type,reference_id,notes,performed_by) VALUES($1,$2,$3,$4,'PURCHASE_RETURN',$5,$6,'PURCHASE_RETURN',$7,$8,$9)`,[d.organizationId,d.branchId,d.medicineId,d.batchId,-d.quantity,d.cost,d.returnId,d.reason,d.userId]);}
-module.exports={list,masters,medicineRule,insertPurchase,insertItem,createBatch,stockMovement,detail,openRegister,addPayment,cashOut,paidTotal,paymentStatus,lockBatch,createReturn,returnItem,deductBatch,returnMovement};
+module.exports={list,masters,businessClock,medicineRule,insertPurchase,insertItem,createBatch,stockMovement,detail,openRegister,addPayment,cashOut,paidTotal,paymentStatus,lockBatch,createReturn,returnItem,deductBatch,returnMovement};
