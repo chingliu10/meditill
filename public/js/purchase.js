@@ -90,7 +90,7 @@
         </div>
       </td>
       <td>
-        <input class="form-control quantity-input" type="number" min="0.0001" step="1" name="items[${index}][quantity]" required>
+        <input class="form-control quantity-input" type="number" min="1" step="1" name="items[${index}][quantity]" required>
       </td>
       <td><input class="form-control" type="number" min="0" step="0.01" name="items[${index}][unit_cost]" required></td>
       <td><input class="form-control" type="number" min="0" step="0.01" name="items[${index}][selling_price]"></td>
@@ -132,7 +132,9 @@
             button.addEventListener('click',()=>{
               idInput.value=item.id;
               searchInput.value=[item.name,item.strength].filter(Boolean).join(' ');
+              qty.min=item.allow_fraction ? '0.0001' : '1';
               qty.step=item.allow_fraction ? '0.0001' : '1';
+              if(qty.value && !qty.checkValidity()) qty.value='';
               unit.textContent=item.unit_name
                 ? `Quantity unit: ${item.unit_name}${item.allow_fraction?' (decimals allowed)':' (whole numbers only)'}`
                 : '';

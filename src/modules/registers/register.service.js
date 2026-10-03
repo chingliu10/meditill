@@ -14,16 +14,27 @@ async function open(input,ctx){
   }
 
   return withTransaction(async client=>{
-    const existing=await repo.current(client,ctx.user.id,null);
+    const existing=await repo.current(client,ctx.user.id,ctx.branch.id);
     if(existing){
-      const location=existing.branch_name ? ` at ${existing.branch_name}` : '';
-      throw appError(`You already have an open register session${location}`,409,'REGISTER_ALREADY_OPEN');
+      throw appError(`You already have an open register session in ${existing.branch_name}`,409,'REGISTER_ALREADY_OPEN');
     }
 
     const register=await repo.findRegister(client,registerId,ctx.branch.id);
     if(!register) throw appError('Register does not belong to the current branch',400,'INVALID_REGISTER');
 
-    return repo.openSession(client,register.id,ctx.branch.id,ctx.user.id,openingCash);
+    const occupied=await repo.currentRegister(client,register.id);
+    if(occupied){
+      throw appError(`${register.name} is already open by ${occupied.user_name}`,409,'REGISTER_IN_USE');
+    }
+
+    try{
+      return await repo.openSession(client,register.id,ctx.branch.id,ctx.user.id,openingCash);
+    }catch(error){
+      if(error.code==='23505'){
+        throw appError('This register or user session was opened by another request. Refresh and try again.',409,'REGISTER_CONFLICT');
+      }
+      throw error;
+    }
   });
 }
 
