@@ -9,7 +9,8 @@
     "start": "node src/server.js",
     "db:migrate": "node database/migrate.js",
     "db:seed": "node database/seed.js",
-    "check": "node scripts/check-js.js"
+    "check": "node scripts/check-js.js",
+    "smoke:core": "node scripts/core-smoke-status.js"
   },
   "engines": {
     "node": ">=20"
