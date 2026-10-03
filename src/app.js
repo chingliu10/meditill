@@ -20,8 +20,8 @@ app.engine('hbs', engine({
   helpers: {
     money(value){return Number(value||0).toLocaleString('en-TZ',{minimumFractionDigits:0,maximumFractionDigits:2});},
     quantity(value){return Number(value||0).toLocaleString('en-TZ',{minimumFractionDigits:0,maximumFractionDigits:4});},
-    date(value){if(!value)return '—';const d=new Date(value);if(Number.isNaN(d.getTime()))return String(value);return new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'numeric'}).format(d);},
-    dateTime(value){if(!value)return '—';const d=new Date(value);if(Number.isNaN(d.getTime()))return String(value);return new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(d);},
+    date(value){if(!value)return '—';const d=new Date(value);if(Number.isNaN(d.getTime()))return String(value);return new Intl.DateTimeFormat('en-GB',{timeZone:'Africa/Dar_es_Salaam',day:'2-digit',month:'short',year:'numeric'}).format(d);},
+    dateTime(value){if(!value)return '—';const d=new Date(value);if(Number.isNaN(d.getTime()))return String(value);return new Intl.DateTimeFormat('en-GB',{timeZone:'Africa/Dar_es_Salaam',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(d);},
     stockClass(stock,reorder){const q=Number(stock||0),r=Number(reorder||0);if(q<=0)return 'danger';if(q<=r)return 'warning';return 'success';},
     stockLabel(stock,reorder){const q=Number(stock||0),r=Number(reorder||0);if(q<=0)return 'Out of stock';if(q<=r)return 'Low stock';return 'In stock';},
     json(value){return JSON.stringify(value);},

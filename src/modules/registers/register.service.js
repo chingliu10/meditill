@@ -40,7 +40,7 @@ async function open(input,ctx){
 
 async function close(input,ctx){
   return withTransaction(async client=>{
-    const session=await repo.current(client,ctx.user.id,ctx.branch.id);
+    const session=await repo.currentForUpdate(client,ctx.user.id,ctx.branch.id);
     if(!session) throw appError('No open register session for this branch',409,'NO_OPEN_REGISTER');
 
     const expected=await repo.expectedCash(client,session.id);
@@ -50,7 +50,7 @@ async function close(input,ctx){
       throw appError('Actual cash is required');
     }
 
-    return repo.close(client,session.id,actual,expected);
+    const closed=await repo.close(client,session.id,actual,expected);if(!closed)throw appError('Register session changed before it could be closed',409,'REGISTER_CLOSE_CONFLICT');return closed;
   });
 }
 
