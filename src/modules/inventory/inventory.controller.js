@@ -15,7 +15,8 @@ async function adjust(req,res,next){
       code:error.code,
       constraint:error.constraint,
       detail:error.detail,
-      message:error.message
+      message:error.message,
+      stage:error.adjustmentStage||null
     });
     next(error);
   }
