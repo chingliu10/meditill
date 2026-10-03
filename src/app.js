@@ -12,6 +12,10 @@ const { notFound,errorHandler } = require('./middleware/error.middleware');
 
 const app = express();
 
+// MediTill is deployed behind Caddy in production. Trust the first reverse proxy
+// so Express recognizes HTTPS via X-Forwarded-Proto and can set secure session cookies.
+app.set('trust proxy', 1);
+
 app.engine('hbs', engine({
   extname: '.hbs',
   defaultLayout: 'main',
