@@ -1,40 +1,7 @@
-const {pool}=require('../../config/db');
-const repo=require('./supplier.repository');
-const service=require('./supplier.service');
-const {setFlash}=require('../../shared/flash');
-
-async function index(req,res,next){
-  try{
-    const suppliers=await repo.list(pool,req.session.user.organization_id);
-    res.render('suppliers/index',{title:'Suppliers',suppliers});
-  }catch(error){
-    next(error);
-  }
-}
-
-async function create(req,res,next){
-  try{
-    const supplier=await service.createSupplier(
-      req.body,
-      req.session.user.organization_id
-    );
-    setFlash(req,'success',`${supplier.name} created successfully.`);
-    res.redirect('/suppliers');
-  }catch(error){
-    next(error);
-  }
-}
-
-async function searchApi(req,res,next){
-  try{
-    res.json(await repo.search(
-      pool,
-      req.session.user.organization_id,
-      req.query.q||''
-    ));
-  }catch(error){
-    next(error);
-  }
-}
-
-module.exports={index,create,searchApi};
+const {pool}=require('../../config/db');const repo=require('./supplier.repository');const service=require('./supplier.service');const {setFlash}=require('../../shared/flash');
+async function index(req,res,next){try{const showArchived=req.query.archived==='1';const suppliers=await repo.list(pool,req.session.user.organization_id,showArchived);res.render('suppliers/index',{title:'Suppliers',suppliers,showArchived});}catch(error){next(error);}}
+async function create(req,res,next){try{const supplier=await service.createSupplier(req.body,req.session.user.organization_id);setFlash(req,'success',`${supplier.name} created successfully.`);res.redirect('/suppliers');}catch(error){next(error);}}
+async function searchApi(req,res,next){try{res.json(await repo.search(pool,req.session.user.organization_id,req.query.q||''));}catch(error){next(error);}}
+async function archive(req,res,next){try{const supplier=await service.setSupplierActive(Number(req.params.id),false,req.session.user.organization_id);setFlash(req,'success',`${supplier.name} archived. Purchase history was preserved.`);res.redirect('/suppliers?archived=1');}catch(error){next(error);}}
+async function restore(req,res,next){try{const supplier=await service.setSupplierActive(Number(req.params.id),true,req.session.user.organization_id);setFlash(req,'success',`${supplier.name} restored.`);res.redirect('/suppliers?archived=1');}catch(error){next(error);}}
+module.exports={index,create,searchApi,archive,restore};

@@ -5,8 +5,9 @@ const {setFlash}=require('../../shared/flash');
 
 async function index(req,res,next){
   try{
-    const customers=await repo.list(pool,req.session.user.organization_id,req.query.q||'');
-    res.render('customers/index',{title:'Customers',customers,q:req.query.q||''});
+    const showArchived=req.query.archived==='1';
+    const customers=await repo.list(pool,req.session.user.organization_id,req.query.q||'',showArchived);
+    res.render('customers/index',{title:'Customers',customers,q:req.query.q||'',showArchived});
   }catch(error){next(error);}
 }
 async function create(req,res,next){
@@ -18,8 +19,20 @@ async function create(req,res,next){
   }catch(error){next(error);}
 }
 async function search(req,res,next){
+  try{res.json(await repo.list(pool,req.session.user.organization_id,req.query.q||'',false));}catch(error){next(error);}
+}
+async function archive(req,res,next){
   try{
-    res.json(await repo.list(pool,req.session.user.organization_id,req.query.q||''));
+    const customer=await service.setCustomerActive(Number(req.params.id),false,req.session.user.organization_id);
+    setFlash(req,'success',`${customer.name} archived. Sales history was preserved.`);
+    res.redirect('/customers?archived=1');
   }catch(error){next(error);}
 }
-module.exports={index,create,search};
+async function restore(req,res,next){
+  try{
+    const customer=await service.setCustomerActive(Number(req.params.id),true,req.session.user.organization_id);
+    setFlash(req,'success',`${customer.name} restored.`);
+    res.redirect('/customers?archived=1');
+  }catch(error){next(error);}
+}
+module.exports={index,create,search,archive,restore};

@@ -6,4 +6,6 @@ router.use(requireAuth);
 router.get('/',requirePermission('customer.view'),c.index);
 router.get('/api/search',requirePermission('sale.create'),c.search);
 router.post('/',requirePermission('customer.manage'),c.create);
+router.post('/:id/archive',requirePermission('customer.manage'),c.archive);
+router.post('/:id/restore',requirePermission('customer.manage'),c.restore);
 module.exports=router;

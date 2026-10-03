@@ -692,3 +692,121 @@ button.mt-status{cursor:pointer}
 .mt-purchase-lines .mt-picker{min-width:240px}
 @media(max-width:1000px){.mt-three-column{grid-template-columns:1fr}.mt-purchase-header-grid{grid-template-columns:1fr}.mt-purchase-totals{grid-template-columns:1fr 1fr}.mt-purchase-totals .mt-form-actions{grid-column:1/-1}}
 @media(max-width:700px){.mt-form-grid,.mt-form-row{grid-template-columns:1fr}.mt-full,.mt-details{grid-column:auto}.mt-purchase-totals{grid-template-columns:1fr}}
+
+
+/* =========================================================
+   Mobile / PWA application pass
+   ========================================================= */
+.mt-install-app[hidden]{display:none!important}
+.mt-install-app{border:1px solid #bfe4df;background:#f0fbf9;color:var(--mt-primary-dark);min-height:40px;padding:8px 12px;border-radius:9px;font-size:11px;font-weight:800;cursor:pointer}
+.mt-inline-form{display:inline-flex;margin:0}
+.mt-row-actions{display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap}
+.mt-btn-xs{padding:6px 9px;min-height:32px;font-size:10px}
+.mt-btn-ghost-danger{background:#fff;color:var(--mt-danger);border-color:#fecaca}
+.mt-btn-ghost-success{background:#fff;color:var(--mt-success);border-color:#bbf7d0}
+.mt-mobile-bottom-nav{display:none}
+.mt-table td[data-label]::before{content:none}
+
+@media(max-width:760px){
+  html{scroll-padding-bottom:90px}
+  body{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+  .mt-content{padding:12px 10px 20px;width:100%;overflow-x:hidden}
+  .mt-topbar{height:60px;padding:0 10px;gap:8px}
+  .mt-topbar-left,.mt-topbar-actions{gap:8px;min-width:0}
+  .mt-location{min-width:0;flex:1}
+  .mt-branch-form{min-width:0}
+  .mt-branch-select{max-width:min(46vw,190px);padding:8px 28px 8px 9px;font-size:12px;min-height:42px}
+  .mt-user-chip,.mt-topbar-pos{display:none}
+  .mt-install-app{padding:7px 9px;min-height:38px}
+  .mt-menu-button{width:42px;height:42px;flex:none}
+  .mt-sidebar{width:min(88vw,330px)}
+  .mt-brand{height:64px}
+  .mt-nav-link{min-height:46px;padding:9px 11px}
+  .mt-sidebar-footer{padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+  .mt-page{gap:12px}
+  .mt-page-header{display:flex;flex-direction:column;align-items:stretch;gap:10px}
+  .mt-page-header>div:first-child{min-width:0}
+  .mt-page-header h1{font-size:21px;line-height:1.2}
+  .mt-page-header p{font-size:11px;line-height:1.45}
+  .mt-page-header>.mt-btn,.mt-page-header>.mt-header-actions,.mt-page-header>form{width:100%}
+  .mt-page-header>.mt-btn{min-height:46px}
+  .mt-header-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mt-header-actions .mt-btn{width:100%;min-height:44px}
+  .mt-panel{border-radius:12px}
+  .mt-panel-header{padding:13px 14px;align-items:flex-start}
+  .mt-panel-header h2{font-size:14px}
+  .mt-panel-header p{font-size:10px}
+  .mt-panel-body{padding:14px}
+  .mt-two-column,.mt-three-column,.mt-settings-grid,.mt-dashboard-grid,.mt-pos-grid{grid-template-columns:1fr!important}
+  .mt-form-grid,.mt-form-row{grid-template-columns:1fr!important;padding:14px}
+  .mt-full,.mt-details{grid-column:auto}
+  .mt-form-stack input,.mt-form-stack select,.mt-form-stack textarea,.mt-filter-form input,.mt-filter-form select,.mt-register-form input,.mt-inline-select,.mt-count-input,.mt-form-grid input,.mt-form-grid select,.mt-form-grid textarea,.mt-customer-picker>input:not([type=hidden]),.mt-payment-box>input,.mt-purchase-header-grid input,.mt-purchase-header-grid select,.mt-purchase-totals input{min-height:44px;font-size:16px}
+  .mt-btn{min-height:42px}
+  .mt-btn-lg{min-height:48px}
+  .mt-toolbar{padding:10px;gap:9px}
+  .mt-search-form{display:grid;grid-template-columns:auto minmax(0,1fr) auto;width:100%;gap:6px}
+  .mt-search-form .mt-btn{display:inline-flex}
+  .mt-search-form input{font-size:16px;min-height:44px}
+  .mt-filter-form{display:grid!important;grid-template-columns:1fr!important;width:100%}
+  .mt-filter-form label,.mt-filter-form button{width:100%}
+  .mt-report-nav,.mt-tabbar{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:3px;scrollbar-width:none}
+  .mt-report-nav::-webkit-scrollbar,.mt-tabbar::-webkit-scrollbar{display:none}
+  .mt-report-nav a,.mt-tab{white-space:nowrap;flex:none;min-height:40px}
+  .mt-metric-grid,.mt-alert-grid{grid-template-columns:1fr 1fr!important}
+  .mt-metric-card{padding:12px;min-width:0}
+  .mt-metric-card strong{font-size:16px}
+  .mt-alert-card{min-height:72px}
+  .mt-register-card{grid-template-columns:1fr!important;padding:15px}
+  .mt-register-form{display:grid!important;grid-template-columns:1fr!important}
+  .mt-register-form input{min-width:0!important}
+  .mt-sale-summary{grid-template-columns:1fr 1fr!important}
+  .mt-permission-grid{grid-template-columns:1fr!important}
+  .mt-purchase-header-grid,.mt-purchase-totals{grid-template-columns:1fr!important}
+  .mt-purchase-totals .mt-form-actions{grid-column:auto}
+  .mt-return-row{grid-template-columns:minmax(0,1fr) 88px}
+  .mt-risk-row{align-items:flex-start}
+  .mt-risk-values{max-width:46%}
+  .mt-picker-menu{position:fixed;left:10px;right:10px;top:auto;bottom:calc(76px + env(safe-area-inset-bottom));max-height:45vh;z-index:2600}
+  .mt-modal-backdrop{align-items:end;padding:0}
+  .mt-modal{width:100%;max-width:none;border-radius:18px 18px 0 0;padding:22px 16px calc(18px + env(safe-area-inset-bottom))}
+  .mt-modal-actions{display:grid;grid-template-columns:1fr 1fr}
+  .mt-modal-actions .mt-btn{min-height:48px}
+  .mt-toast-host{top:70px;left:10px;right:10px;width:auto}
+
+  .mt-table-wrap.mt-card-table-wrap{overflow:visible}
+  .mt-table.mt-mobile-cards{min-width:0!important;display:block;background:transparent}
+  .mt-table.mt-mobile-cards thead{display:none}
+  .mt-table.mt-mobile-cards tbody{display:grid;gap:10px;padding:10px}
+  .mt-table.mt-mobile-cards tbody tr{display:block;background:#fff;border:1px solid var(--mt-border);border-radius:11px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.03)}
+  .mt-table.mt-mobile-cards tbody tr:hover{background:#fff}
+  .mt-table.mt-mobile-cards td{display:grid;grid-template-columns:minmax(92px,36%) minmax(0,1fr);gap:10px;align-items:center;width:100%;padding:10px 12px;border-bottom:1px solid #edf1f5;font-size:12px;text-align:left!important;min-height:42px}
+  .mt-table.mt-mobile-cards td:last-child{border-bottom:0}
+  .mt-table.mt-mobile-cards td[data-label]::before{content:attr(data-label);display:block;color:#7c8798;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+  .mt-table.mt-mobile-cards td.mt-mobile-full{display:block;padding:0}
+  .mt-table.mt-mobile-cards td.mt-mobile-full::before{display:none}
+  .mt-table.mt-mobile-cards .mt-medicine-cell{min-width:0}
+  .mt-table.mt-mobile-cards .mt-row-actions{justify-content:flex-start}
+  .mt-table.mt-mobile-cards .mt-inline-select{max-width:100%}
+  .mt-table-scroll-mobile{min-width:760px!important}
+  .mt-table-wrap.mt-scroll-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-inline:-2px}
+
+  .mt-mobile-bottom-nav{position:fixed;z-index:2400;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));min-height:64px;padding:5px 4px calc(5px + env(safe-area-inset-bottom));background:rgba(255,255,255,.97);border-top:1px solid var(--mt-border);box-shadow:0 -8px 24px rgba(15,23,42,.07);backdrop-filter:blur(12px)}
+  .mt-mobile-nav-link{border:0;background:transparent;color:#64748b;text-decoration:none;display:grid;place-items:center;align-content:center;gap:2px;min-width:0;min-height:52px;font-size:9px;font-weight:750;cursor:pointer;border-radius:10px}
+  .mt-mobile-nav-link span:first-child{font-size:18px;line-height:1}
+  .mt-mobile-nav-link.is-active{color:var(--mt-primary-dark);background:var(--mt-primary-soft)}
+  .mt-pos{padding-bottom:4px}
+  .mt-pos-grid{min-height:0}
+  .mt-pos-catalog{min-height:0;padding:10px}
+  .mt-pos-cart{padding:12px}
+  .mt-product-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px}
+  .mt-pos-product{min-height:154px}
+  .mt-pos-product img{height:76px}
+  .mt-complete-sale{position:sticky;bottom:0;z-index:5}
+  .mt-recent-sales{grid-template-columns:1fr!important}
+}
+@media(max-width:420px){
+  .mt-metric-grid,.mt-alert-grid,.mt-sale-summary{grid-template-columns:1fr!important}
+  .mt-header-actions{grid-template-columns:1fr}
+  .mt-branch-select{max-width:44vw}
+  .mt-mobile-nav-link{font-size:8px}
+}

@@ -1,1 +1,63 @@
-{"name":"MediTill","short_name":"MediTill","start_url":"/pos","display":"standalone","background_color":"#f8fafc","theme_color":"#0f766e","icons":[]}
+{
+  "id": "/",
+  "name": "MediTill Pharmacy POS",
+  "short_name": "MediTill",
+  "description": "Pharmacy point of sale, purchasing and inventory management.",
+  "start_url": "/pos",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "any",
+  "background_color": "#f5f7fa",
+  "theme_color": "#0f7f76",
+  "icons": [
+    {
+      "src": "/images/meditill-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Point of Sale",
+      "short_name": "POS",
+      "url": "/pos",
+      "icons": [
+        {
+          "src": "/images/meditill-icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Medicines",
+      "short_name": "Medicines",
+      "url": "/medicines",
+      "icons": [
+        {
+          "src": "/images/meditill-icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Inventory",
+      "short_name": "Inventory",
+      "url": "/inventory",
+      "icons": [
+        {
+          "src": "/images/meditill-icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ]
+}

@@ -2,9 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0f7f76">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="MediTill">
   <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/images/meditill-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/images/meditill-icon.svg">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/css/app.css">
   <title>{{title}} | MediTill</title>
@@ -14,7 +20,7 @@
 {{#if user}}
 <div class="mt-app">
 <aside class="mt-sidebar" id="appSidebar">
-  <div class="mt-brand"><a href="/" class="mt-brand-link"><span class="mt-brand-mark">M</span><span><strong>MediTill</strong><small>Pharmacy POS</small></span></a><button class="mt-icon-button mt-sidebar-close" id="closeSidebar">×</button></div>
+  <div class="mt-brand"><a href="/" class="mt-brand-link"><span class="mt-brand-mark">M</span><span><strong>MediTill</strong><small>Pharmacy POS</small></span></a><button class="mt-icon-button mt-sidebar-close" id="closeSidebar" aria-label="Close menu">×</button></div>
   <nav class="mt-nav">
     <div class="mt-nav-section">OVERVIEW</div>
     <a class="mt-nav-link" data-nav href="/"><span class="mt-nav-icon">⌂</span><span>Dashboard</span></a>
@@ -44,11 +50,18 @@
 <div class="mt-sidebar-backdrop" id="sidebarBackdrop"></div>
 <div class="mt-workspace">
 <header class="mt-topbar">
-  <div class="mt-topbar-left"><button class="mt-icon-button mt-menu-button" id="openSidebar">☰</button><div class="mt-location"><span class="mt-location-label">Location</span><form action="/branches/switch" method="post" class="mt-branch-form"><select name="branch_id" class="mt-branch-select" onchange="this.form.submit()">{{#each branches}}<option value="{{id}}">{{name}}</option>{{/each}}</select></form></div></div>
-  <div class="mt-topbar-actions"><a href="/pos" class="mt-topbar-pos">Open POS</a><div class="mt-user-chip"><span class="mt-user-avatar">A</span><span class="mt-user-meta"><strong>{{user.name}}</strong><small>{{currentBranch.name}}</small></span></div></div>
+  <div class="mt-topbar-left"><button class="mt-icon-button mt-menu-button" id="openSidebar" aria-label="Open menu">☰</button><div class="mt-location"><span class="mt-location-label">Location</span><form action="/branches/switch" method="post" class="mt-branch-form"><select name="branch_id" class="mt-branch-select" onchange="this.form.submit()">{{#each branches}}<option value="{{id}}">{{name}}</option>{{/each}}</select></form></div></div>
+  <div class="mt-topbar-actions"><button type="button" id="installApp" class="mt-install-app" hidden>Install app</button><a href="/pos" class="mt-topbar-pos">Open POS</a><div class="mt-user-chip"><span class="mt-user-avatar">A</span><span class="mt-user-meta"><strong>{{user.name}}</strong><small>{{currentBranch.name}}</small></span></div></div>
 </header>
 <main class="mt-content">{{{body}}}</main>
 </div></div>
+<nav class="mt-mobile-bottom-nav" aria-label="Mobile navigation">
+  <a class="mt-mobile-nav-link" data-nav href="/"><span>⌂</span><span>Home</span></a>
+  <a class="mt-mobile-nav-link" data-nav href="/pos"><span>▦</span><span>POS</span></a>
+  <a class="mt-mobile-nav-link" data-nav href="/medicines"><span>✚</span><span>Medicines</span></a>
+  <a class="mt-mobile-nav-link" data-nav href="/sales"><span>◫</span><span>Sales</span></a>
+  <button class="mt-mobile-nav-link" type="button" id="mobileMore"><span>☰</span><span>More</span></button>
+</nav>
 {{else}}<main class="mt-auth-shell">{{{body}}}</main>{{/if}}
 <div class="mt-modal-backdrop" id="confirmModal" hidden><div class="mt-modal"><div class="mt-modal-icon">!</div><h3 id="confirmTitle">Confirm action</h3><p id="confirmMessage">Are you sure?</p><div class="mt-modal-actions"><button class="mt-btn mt-btn-secondary" id="confirmCancel">Cancel</button><button class="mt-btn mt-btn-danger" id="confirmAccept">Confirm</button></div></div></div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script src="/js/app.js"></script><script>if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});</script>

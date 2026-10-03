@@ -1,3 +1,4 @@
 const {pool}=require('../../config/db');const repo=require('./supplier.repository');const {appError}=require('../../shared/app-error');
 async function createSupplier(input,organizationId){const name=String(input.name||'').trim();if(!name)throw appError('Supplier name is required');return repo.create(pool,{organizationId,name,contactPerson:input.contact_person,phone:input.phone,email:input.email,address:input.address,notes:input.notes});}
-module.exports={createSupplier};
+async function setSupplierActive(id,active,organizationId){const supplier=await repo.setActive(pool,organizationId,id,active);if(!supplier)throw appError('Supplier not found',404);return supplier;}
+module.exports={createSupplier,setSupplierActive};
