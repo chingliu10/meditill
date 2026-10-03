@@ -57,12 +57,12 @@
       <span><strong>Out of stock</strong><small>No saleable quantity</small></span>
       <b>→</b>
     </a>
-    <a href="/inventory/api/expiring?days=30" class="mt-alert-card mt-alert-info">
+    <a href="/reports/expiry" class="mt-alert-card mt-alert-info">
       <span class="mt-alert-count">{{data.expiring_30}}</span>
       <span><strong>Expiring ≤30 days</strong><small>Needs attention soon</small></span>
       <b>→</b>
     </a>
-    <a href="/inventory" class="mt-alert-card mt-alert-danger-soft">
+    <a href="/reports/expiry" class="mt-alert-card mt-alert-danger-soft">
       <span class="mt-alert-count">{{data.expired_batches}}</span>
       <span><strong>Expired batches</strong><small>Remove from saleable stock</small></span>
       <b>→</b>
@@ -100,7 +100,7 @@
           <h2>Expiry risk</h2>
           <p>Next 90 days and expired</p>
         </div>
-        <a href="/inventory">Inventory</a>
+        <a href="/reports/expiry">Expiry report</a>
       </div>
       <div class="mt-list">
         {{#each expiryRisk}}

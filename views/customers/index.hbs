@@ -12,7 +12,7 @@
           <span class="mt-search-icon">⌕</span><input name="q" value="{{q}}" placeholder="Search customers"><button class="mt-btn mt-btn-primary">Search</button>
         </form>
       </div>
-      <div class="mt-table-wrap"><table class="mt-table"><thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+      <div class="mt-table-wrap"><table class="mt-table mt-table-compact"><thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead><tbody>
       {{#each customers}}<tr><td><strong>{{name}}</strong></td><td>{{#if phone}}{{phone}}{{else}}—{{/if}}</td><td>{{#if email}}{{email}}{{else}}—{{/if}}</td><td>{{#if is_walk_in}}<span class="mt-status mt-status-info">Walk-in</span>{{else}}{{#if active}}<span class="mt-status mt-status-success">Active</span>{{else}}<span class="mt-status mt-status-danger">Archived</span>{{/if}}{{/if}}</td><td><div class="mt-row-actions">{{#unless is_walk_in}}{{#if active}}<form class="mt-inline-form" method="post" action="/customers/{{id}}/archive" data-confirm-form data-confirm-title="Archive customer?" data-confirm-message="The customer will disappear from normal customer search, but previous sales remain intact."><button class="mt-btn mt-btn-xs mt-btn-ghost-danger">Archive</button></form>{{else}}<form class="mt-inline-form" method="post" action="/customers/{{id}}/restore"><button class="mt-btn mt-btn-xs mt-btn-ghost-success">Restore</button></form>{{/if}}{{else}}<span class="mt-cell-sub">System customer</span>{{/unless}}</div></td></tr>
       {{else}}<tr><td colspan="5"><div class="mt-empty-state">No customers found.</div></td></tr>{{/each}}
       </tbody></table></div>

@@ -5,7 +5,7 @@
     <div class="mt-purchase-header-grid">
       <label>Supplier<div class="mt-picker"><input type="hidden" name="supplier_id" id="supplierId"><input id="supplierSearch" autocomplete="off" placeholder="Search supplier by name, contact or phone"><div class="mt-picker-menu" id="supplierResults"></div></div></label>
       <label>Supplier invoice<input name="supplier_invoice_number"></label>
-      <label>Date<input type="date" name="purchase_date"></label>
+      <label>Date<input type="date" name="purchase_date" id="purchaseDate"></label>
     </div>
   </article>
   <article class="mt-panel mt-panel-flush mt-purchase-lines">
@@ -15,4 +15,14 @@
   <article class="mt-panel mt-panel-body"><div class="mt-purchase-totals"><label>Discount<input type="number" min="0" step="0.01" name="discount" value="0"></label><label>Tax<input type="number" min="0" step="0.01" name="tax" value="0"></label><div class="mt-form-actions"><button class="mt-btn mt-btn-primary mt-btn-lg">Receive stock</button></div></div></article>
 </form>
 <script src="/js/purchase.js"></script>
+<script>
+(() => {
+  const input=document.getElementById('purchaseDate');
+  if(!input) return;
+  const now=new Date();
+  const local=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  input.max=local;
+  if(!input.value) input.value=local;
+})();
+</script>
 </section>

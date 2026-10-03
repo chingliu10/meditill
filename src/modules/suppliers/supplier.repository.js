@@ -27,7 +27,7 @@ async function create(db,d){
   return rows[0];
 }
 async function setActive(db,organizationId,id,active){
-  const {rows}=await db.query('UPDATE suppliers SET active=$3,updated_at=now() WHERE organization_id=$1 AND id=$2 RETURNING id,name,active',[organizationId,id,active]);
+  const {rows}=await db.query('UPDATE suppliers SET active=$3 WHERE organization_id=$1 AND id=$2 RETURNING id,name,active',[organizationId,id,active]);
   return rows[0]||null;
 }
 module.exports={list,search,create,setActive};

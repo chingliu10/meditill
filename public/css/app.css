@@ -810,3 +810,6 @@ button.mt-status{cursor:pointer}
   .mt-branch-select{max-width:44vw}
   .mt-mobile-nav-link{font-size:8px}
 }
+
+/* Compact contact tables avoid unnecessary desktop horizontal scrolling. */
+.mt-table-compact{min-width:620px}
