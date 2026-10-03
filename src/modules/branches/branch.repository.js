@@ -1,8 +1,6 @@
-async function userBranch(db,userId,branchId){
-  const {rows}=await db.query(
-    `SELECT b.id,b.name,b.code FROM branches b
-     JOIN user_branches ub ON ub.branch_id=b.id
-     WHERE ub.user_id=$1 AND b.id=$2 AND b.active=true`,[userId,branchId]);
-  return rows[0]||null;
-}
-module.exports={userBranch};
+async function userBranch(db,userId,branchId){const {rows}=await db.query(`SELECT b.id,b.name,b.code FROM branches b JOIN user_branches ub ON ub.branch_id=b.id WHERE ub.user_id=$1 AND b.id=$2 AND b.active=true`,[userId,branchId]);return rows[0]||null;}
+async function list(db,organizationId){const {rows}=await db.query('SELECT * FROM branches WHERE organization_id=$1 ORDER BY active DESC,name',[organizationId]);return rows;}
+async function create(db,d){const {rows}=await db.query(`INSERT INTO branches(organization_id,name,code,phone,address) VALUES($1,$2,$3,$4,$5) RETURNING *`,[d.organizationId,d.name,d.code,d.phone||null,d.address||null]);return rows[0];}
+async function grant(db,userId,branchId){await db.query('INSERT INTO user_branches(user_id,branch_id) VALUES($1,$2) ON CONFLICT DO NOTHING',[userId,branchId]);}
+async function createRegister(db,branchId){await db.query(`INSERT INTO registers(branch_id,name) VALUES($1,'Register 1') ON CONFLICT DO NOTHING`,[branchId]);}
+module.exports={userBranch,list,create,grant,createRegister};

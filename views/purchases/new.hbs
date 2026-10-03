@@ -1,67 +1,18 @@
-<h2 class="mb-3">Receive purchase</h2>
-
-<form method="post" action="/purchases" id="purchaseForm" class="card p-3">
-  <div class="row g-3 mb-3">
-    <div class="col-md-5">
-      <label class="form-label">Supplier</label>
-      <div class="mt-picker" data-supplier-picker>
-        <input type="hidden" name="supplier_id" id="supplierId">
-        <input
-          class="form-control"
-          id="supplierSearch"
-          autocomplete="off"
-          placeholder="Search supplier by name, contact or phone"
-        >
-        <div class="mt-picker-menu" id="supplierResults"></div>
-      </div>
-      <div class="form-text">Type to search instead of scrolling through a long list.</div>
+<section class="mt-page">
+<div class="mt-page-header"><div><p class="mt-eyebrow">PROCUREMENT</p><h1>Receive purchase</h1><p>Search medicines, capture batch/expiry and post stock in one transaction.</p></div><a href="/purchases" class="mt-btn mt-btn-secondary">Back</a></div>
+<form method="post" action="/purchases" id="purchaseForm" class="mt-purchase-form">
+  <article class="mt-panel mt-panel-body">
+    <div class="mt-purchase-header-grid">
+      <label>Supplier<div class="mt-picker"><input type="hidden" name="supplier_id" id="supplierId"><input id="supplierSearch" autocomplete="off" placeholder="Search supplier by name, contact or phone"><div class="mt-picker-menu" id="supplierResults"></div></div></label>
+      <label>Supplier invoice<input name="supplier_invoice_number"></label>
+      <label>Date<input type="date" name="purchase_date"></label>
     </div>
-
-    <div class="col-md-4">
-      <label class="form-label">Supplier invoice</label>
-      <input class="form-control" name="supplier_invoice_number">
-    </div>
-
-    <div class="col-md-3">
-      <label class="form-label">Date</label>
-      <input class="form-control" type="date" name="purchase_date">
-    </div>
-  </div>
-
-  <div class="table-responsive">
-    <table class="table align-middle" id="itemsTable">
-      <thead>
-        <tr>
-          <th style="min-width:260px">Medicine</th>
-          <th style="min-width:110px">Qty</th>
-          <th style="min-width:120px">Cost</th>
-          <th style="min-width:120px">Sell</th>
-          <th style="min-width:130px">Batch</th>
-          <th style="min-width:150px">Expiry</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <button type="button" class="btn btn-outline-secondary mb-3 align-self-start" id="addRow">
-    + Add medicine
-  </button>
-
-  <div class="row g-3">
-    <div class="col-md-3">
-      <label class="form-label">Discount</label>
-      <input class="form-control" type="number" min="0" step="0.01" name="discount" value="0">
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">Tax</label>
-      <input class="form-control" type="number" min="0" step="0.01" name="tax" value="0">
-    </div>
-    <div class="col-md-6 d-flex align-items-end justify-content-end">
-      <button class="btn btn-primary btn-lg">Receive stock</button>
-    </div>
-  </div>
+  </article>
+  <article class="mt-panel mt-panel-flush mt-purchase-lines">
+    <div class="mt-table-wrap"><table class="mt-table" id="itemsTable"><thead><tr><th>Medicine</th><th>Qty</th><th>Cost</th><th>Sell</th><th>Batch</th><th>Expiry</th><th></th></tr></thead><tbody></tbody></table></div>
+    <div class="mt-panel-body"><button type="button" class="mt-btn mt-btn-secondary" id="addRow">+ Add medicine</button></div>
+  </article>
+  <article class="mt-panel mt-panel-body"><div class="mt-purchase-totals"><label>Discount<input type="number" min="0" step="0.01" name="discount" value="0"></label><label>Tax<input type="number" min="0" step="0.01" name="tax" value="0"></label><div class="mt-form-actions"><button class="mt-btn mt-btn-primary mt-btn-lg">Receive stock</button></div></div></article>
 </form>
-
 <script src="/js/purchase.js"></script>
+</section>

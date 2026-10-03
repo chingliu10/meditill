@@ -1,11 +1,20 @@
-<div class="pos-shell row g-3">
-<div class="col-lg-7 pos-products"><div class="d-flex justify-content-between align-items-center mb-2"><h2 class="mb-0">POS</h2>{{#if register}}<span class="badge text-bg-success">Register open</span>{{else}}<a href="/registers" class="btn btn-warning">Open register</a>{{/if}}</div>
-<input id="scanInput" class="form-control form-control-lg mb-3" autocomplete="off" placeholder="Scan barcode or search medicine" autofocus>
-<div id="products" class="row g-2"></div></div>
-<div class="col-lg-5 pos-cart"><div class="card h-100 p-3"><h4>Cart</h4><div id="cartLines" class="flex-grow-1"></div><hr>
-<div class="d-flex justify-content-between"><span>Subtotal</span><strong id="subtotal">TZS 0</strong></div>
-<div class="d-flex justify-content-between fs-4 mt-2"><span>Total</span><strong id="total">TZS 0</strong></div>
-<div class="mt-3"><label class="form-label">Payment</label><div class="input-group"><select id="paymentMethod" class="form-select"><option>CASH</option><option>MOBILE_MONEY</option><option>CARD</option><option>BANK</option></select><input id="paymentAmount" type="number" class="form-control" min="0" step="0.01"></div></div>
-<button id="completeSale" class="btn btn-primary btn-lg touch-btn mt-3" {{#unless register}}disabled{{/unless}}>Complete sale</button>
-<div id="posMessage" class="mt-2"></div></div></div></div>
+<section class="mt-pos">
+<div class="mt-pos-top"><div><p class="mt-eyebrow">POINT OF SALE</p><h1>{{currentBranch.name}}</h1></div><div class="mt-pos-session">{{#if register}}<span class="mt-status mt-status-success">● {{register.register_name}} open</span>{{else}}<a href="/registers" class="mt-btn mt-btn-warning">Open register</a>{{/if}}</div></div>
+<div class="mt-pos-grid">
+  <section class="mt-pos-catalog">
+    <div class="mt-pos-search-row"><div class="mt-pos-search"><span>⌕</span><input id="scanInput" autocomplete="off" placeholder="Scan barcode or search medicine" autofocus></div></div>
+    <div id="products" class="mt-product-grid"></div>
+  </section>
+  <aside class="mt-pos-cart">
+    <div class="mt-customer-picker"><label>Customer</label><input type="hidden" id="customerId"><input id="customerSearch" autocomplete="off" placeholder="Walk-in Customer"><div id="customerResults" class="mt-picker-menu"></div></div>
+    <div class="mt-cart-heading"><h2>Cart</h2><span id="cartCount">0 items</span></div>
+    <div id="cartLines" class="mt-cart-lines"><div class="mt-empty-state">Scan or tap a medicine to begin.</div></div>
+    <div class="mt-cart-summary"><div><span>Subtotal</span><strong id="subtotal">TZS 0</strong></div><div class="mt-grand-total"><span>Total</span><strong id="total">TZS 0</strong></div></div>
+    <div class="mt-payment-box"><label>Payment method</label><div class="mt-payment-methods"><button data-method="CASH" class="is-active">Cash</button><button data-method="MOBILE_MONEY">Mobile</button><button data-method="CARD">Card</button><button data-method="BANK">Bank</button></div><input type="hidden" id="paymentMethod" value="CASH"><label>Amount received</label><input id="paymentAmount" type="number" min="0" step="0.01"></div>
+    <button id="completeSale" class="mt-btn mt-btn-primary mt-complete-sale" {{#unless register}}disabled{{/unless}}>Complete sale</button>
+  </aside>
+</div>
+<div class="mt-pos-recent"><div class="mt-panel-header"><div><h2>Recent transactions</h2><p>Quick receipt access</p></div><a href="/sales">View all</a></div><div class="mt-recent-sales">{{#each recent}}<a href="/sales/{{id}}" class="mt-recent-sale"><span><strong>{{sale_number}}</strong><small>{{#if customer}}{{customer}}{{else}}Walk-in{{/if}} · {{dateTime created_at}}</small></span><b>TZS {{money total}}</b></a>{{else}}<div class="mt-empty-state">No sales yet.</div>{{/each}}</div></div>
+</section>
+<div class="mt-sale-success" id="saleSuccess" hidden><div class="mt-sale-success-card"><div class="mt-success-check">✓</div><h2>Sale completed</h2><p id="saleSuccessNumber"></p><strong id="saleSuccessChange"></strong><div class="mt-modal-actions"><a id="saleReceiptLink" target="_blank" class="mt-btn mt-btn-secondary">Print receipt</a><button id="saleDone" class="mt-btn mt-btn-primary">New sale</button></div></div></div>
 <script src="/js/pos.js"></script>

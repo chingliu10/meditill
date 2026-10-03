@@ -1,0 +1,5 @@
+const {pool}=require('../../config/db');const repo=require('./user.repository');const service=require('./user.service');const {setFlash}=require('../../shared/flash');
+async function index(req,res,next){try{const [users,masters]=await Promise.all([repo.list(pool,req.session.user.organization_id),repo.masters(pool,req.session.user.organization_id)]);res.render('users/index',{title:'Users',users,...masters});}catch(e){next(e);}}
+async function create(req,res,next){try{const u=await service.createUser(req.body,{user:req.session.user});setFlash(req,'success',`${u.name} can now sign in.`);res.redirect('/users');}catch(e){next(e);}}
+async function active(req,res,next){try{const u=await repo.setActive(pool,req.session.user.organization_id,Number(req.params.id),!!req.body.active);if(!u)return res.status(404).json({error:'User not found'});res.json(u);}catch(e){next(e);}}
+module.exports={index,create,active};

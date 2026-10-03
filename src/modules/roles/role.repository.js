@@ -1,0 +1,5 @@
+async function list(db,organizationId){const {rows}=await db.query(`SELECT r.id,r.name,r.description,r.is_system,COALESCE(array_agg(DISTINCT p.code) FILTER(WHERE p.code IS NOT NULL),'{}') permissions FROM roles r LEFT JOIN role_permissions rp ON rp.role_id=r.id LEFT JOIN permissions p ON p.id=rp.permission_id WHERE r.organization_id=$1 GROUP BY r.id ORDER BY r.name`,[organizationId]);return rows;}
+async function permissions(db){const {rows}=await db.query('SELECT id,code,description FROM permissions ORDER BY code');return rows;}
+async function create(db,organizationId,name,description){const {rows}=await db.query('INSERT INTO roles(organization_id,name,description) VALUES($1,$2,$3) RETURNING *',[organizationId,name,description||null]);return rows[0];}
+async function addPermission(db,roleId,permissionId){await db.query('INSERT INTO role_permissions(role_id,permission_id) VALUES($1,$2) ON CONFLICT DO NOTHING',[roleId,permissionId]);}
+module.exports={list,permissions,create,addPermission};

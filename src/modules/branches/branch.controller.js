@@ -1,11 +1,5 @@
-const {pool}=require('../../config/db');
-const repo=require('./branch.repository');
-async function switchBranch(req,res,next){
-  try{
-    const branch=await repo.userBranch(pool,req.session.user.id,req.body.branch_id);
-    if(!branch){const e=new Error('Branch access denied');e.statusCode=403;throw e;}
-    req.session.currentBranch=branch;
-    res.redirect(req.get('referer')||'/');
-  }catch(e){next(e);}
-}
-module.exports={switchBranch};
+const {pool,withTransaction}=require('../../config/db');const repo=require('./branch.repository');const {setFlash}=require('../../shared/flash');const {appError}=require('../../shared/app-error');
+async function switchBranch(req,res,next){try{const branch=await repo.userBranch(pool,req.session.user.id,req.body.branch_id);if(!branch)throw appError('Branch access denied',403);req.session.currentBranch=branch;res.redirect(req.get('referer')||'/');}catch(e){next(e);}}
+async function index(req,res,next){try{res.render('branches/index',{title:'Branches',branchList:await repo.list(pool,req.session.user.organization_id)});}catch(e){next(e);}}
+async function create(req,res,next){try{const name=String(req.body.name||'').trim(),code=String(req.body.code||'').trim().toUpperCase();if(!name||!code)throw appError('Branch name and code are required');const branch=await withTransaction(async client=>{const b=await repo.create(client,{organizationId:req.session.user.organization_id,name,code,phone:String(req.body.phone||'').trim(),address:String(req.body.address||'').trim()});await repo.grant(client,req.session.user.id,b.id);await repo.createRegister(client,b.id);return b;});req.session.branches=[...(req.session.branches||[]),{id:branch.id,name:branch.name,code:branch.code}];setFlash(req,'success',`${branch.name} created with Register 1.`);res.redirect('/branches');}catch(e){next(e);}}
+module.exports={switchBranch,index,create};

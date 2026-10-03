@@ -1,20 +1,8 @@
-const {withTransaction}=require('../../config/db');
-const repo=require('./medicine.repository');
-const {appError}=require('../../shared/app-error');
-
-async function createMedicine(input,context){
-  const name=String(input.name||'').trim();
-  if(!name) throw appError('Medicine name is required');
-  const sellingPrice=Number(input.selling_price||0);
-  if(sellingPrice<0) throw appError('Selling price cannot be negative');
-  return withTransaction(client=>repo.create(client,{
-    organizationId:context.user.organization_id,userId:context.user.id,name,
-    genericName:String(input.generic_name||'').trim(),brandName:String(input.brand_name||'').trim(),
-    strength:String(input.strength||'').trim(),dosageForm:String(input.dosage_form||'').trim(),
-    barcode:String(input.barcode||'').trim(),sku:String(input.sku||'').trim(),
-    categoryId:input.category_id,manufacturerId:input.manufacturer_id,baseUnitId:input.base_unit_id,
-    sellingPrice,reorderLevel:Number(input.reorder_level||0),prescriptionRequired:input.prescription_required==='on',
-    trackExpiry:input.track_expiry!=='off',description:String(input.description||'').trim()
-  }));
-}
-module.exports={createMedicine};
+const {withTransaction}=require('../../config/db');const repo=require('./medicine.repository');const {appError}=require('../../shared/app-error');
+function data(input,context){const name=String(input.name||'').trim();if(!name)throw appError('Medicine name is required');const sellingPrice=Number(input.selling_price||0),reorderLevel=Number(input.reorder_level||0);if(!Number.isFinite(sellingPrice)||sellingPrice<0||!Number.isFinite(reorderLevel)||reorderLevel<0)throw appError('Invalid price or reorder level');return {organizationId:context.user.organization_id,userId:context.user.id,name,genericName:String(input.generic_name||'').trim(),brandName:String(input.brand_name||'').trim(),strength:String(input.strength||'').trim(),dosageForm:String(input.dosage_form||'').trim(),barcode:String(input.barcode||'').trim(),sku:String(input.sku||'').trim(),categoryId:input.category_id,manufacturerId:input.manufacturer_id,baseUnitId:input.base_unit_id,sellingPrice,reorderLevel,prescriptionRequired:input.prescription_required==='on',trackExpiry:input.track_expiry==='on',description:String(input.description||'').trim(),imagePath:String(input.image_path||'').trim()};}
+async function createMedicine(input,context){return withTransaction(client=>repo.create(client,data(input,context)));}
+async function updateMedicine(id,input,context){return withTransaction(async client=>{const current=await repo.get(client,context.user.organization_id,id);if(!current)throw appError('Medicine not found',404);return repo.update(client,context.user.organization_id,id,data(input,context));});}
+async function deactivateMedicine(id,context){return withTransaction(async client=>{const current=await repo.get(client,context.user.organization_id,id);if(!current)throw appError('Medicine not found',404);const qty=await repo.stockTotal(client,id);if(qty>0)throw appError('Cannot deactivate a medicine while stock remains. Transfer, return or adjust the stock first.',409);return repo.deactivate(client,context.user.organization_id,id);});}
+async function addBarcode(id,input,context){const code=String(input.barcode||'').trim();if(!code)throw appError('Barcode is required');return withTransaction(async client=>{if(!await repo.get(client,context.user.organization_id,id))throw appError('Medicine not found',404);return repo.addBarcode(client,id,code,input.is_primary==='on');});}
+async function addPackage(id,input,context){const name=String(input.name||'').trim(),conversion=Number(input.conversion_to_base),price=input.selling_price===''?null:Number(input.selling_price);if(!name||!Number.isFinite(conversion)||conversion<=0)throw appError('Package name and conversion are required');if(price!==null&&(!Number.isFinite(price)||price<0))throw appError('Invalid package price');return withTransaction(async client=>{if(!await repo.get(client,context.user.organization_id,id))throw appError('Medicine not found',404);return repo.addPackage(client,id,{name,conversion,barcode:String(input.barcode||'').trim(),price});});}
+module.exports={createMedicine,updateMedicine,deactivateMedicine,addBarcode,addPackage};

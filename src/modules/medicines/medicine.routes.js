@@ -1,12 +1,1 @@
-const router=require('express').Router();
-const {requireAuth}=require('../../middleware/auth.middleware');
-const {requireBranch}=require('../../middleware/branch.middleware');
-const {requirePermission}=require('../../middleware/permission.middleware');
-const c=require('./medicine.controller');
-router.use(requireAuth,requireBranch);
-router.get('/',requirePermission('medicine.view'),c.index);
-router.get('/new',requirePermission('medicine.create'),c.newForm);
-router.post('/',requirePermission('medicine.create'),c.create);
-router.get('/api/search',requirePermission('medicine.view'),c.searchApi);
-router.get('/api/barcode/:barcode',requirePermission('medicine.view'),c.barcode);
-module.exports=router;
+const router=require('express').Router();const {requireAuth}=require('../../middleware/auth.middleware');const {requireBranch}=require('../../middleware/branch.middleware');const {requirePermission}=require('../../middleware/permission.middleware');const c=require('./medicine.controller');router.use(requireAuth,requireBranch);router.get('/',requirePermission('medicine.view'),c.index);router.get('/new',requirePermission('medicine.create'),c.newForm);router.post('/',requirePermission('medicine.create'),c.create);router.get('/api/search',requirePermission('medicine.view'),c.searchApi);router.get('/api/barcode/:barcode',requirePermission('medicine.view'),c.barcode);router.get('/:id/edit',requirePermission('medicine.edit'),c.editForm);router.post('/:id',requirePermission('medicine.edit'),c.update);router.post('/:id/deactivate',requirePermission('medicine.deactivate'),c.deactivate);router.post('/:id/barcodes',requirePermission('medicine.edit'),c.addBarcode);router.post('/:id/barcodes/:barcodeId/remove',requirePermission('medicine.edit'),c.removeBarcode);router.post('/:id/packages',requirePermission('medicine.edit'),c.addPackage);router.post('/:id/packages/:packageId/remove',requirePermission('medicine.edit'),c.removePackage);module.exports=router;

@@ -1,126 +1,15 @@
-async function list(db,organizationId,q='',branchId=null){
-  const term=`%${q.trim()}%`;
-  const {rows}=await db.query(
-    `SELECT
-      m.id,m.name,m.generic_name,m.brand_name,m.strength,m.dosage_form,m.sku,
-      m.default_selling_price,m.reorder_level,m.image_path,
-      c.name category,
-      u.name unit_name,
-      u.symbol unit,
-      COALESCE(u.allow_fraction,false) allow_fraction,
-      (SELECT barcode FROM medicine_barcodes mb
-       WHERE mb.medicine_id=m.id
-       ORDER BY is_primary DESC,id
-       LIMIT 1) barcode,
-      CASE WHEN $4::bigint IS NULL THEN NULL ELSE COALESCE((
-        SELECT SUM(b.quantity_available)
-        FROM medicine_batches b
-        WHERE b.medicine_id=m.id
-          AND b.branch_id=$4
-          AND b.status='SALEABLE'
-          AND b.quantity_available>0
-          AND (b.expiry_date IS NULL OR b.expiry_date>=current_date)
-      ),0) END saleable_stock
-     FROM medicines m
-     LEFT JOIN categories c ON c.id=m.category_id
-     LEFT JOIN units u ON u.id=m.base_unit_id
-     WHERE m.organization_id=$1
-       AND m.active=true
-       AND (
-         $2=''
-         OR m.name ILIKE $3
-         OR COALESCE(m.generic_name,'') ILIKE $3
-         OR COALESCE(m.brand_name,'') ILIKE $3
-         OR COALESCE(m.sku,'') ILIKE $3
-         OR EXISTS(
-           SELECT 1
-           FROM medicine_barcodes mb
-           WHERE mb.medicine_id=m.id
-             AND mb.barcode ILIKE $3
-         )
-       )
-     ORDER BY m.name
-     LIMIT 100`,
-    [organizationId,q.trim(),term,branchId]
-  );
-  return rows;
-}
-
-async function masters(db,organizationId){
-  const [categories,units,manufacturers]=await Promise.all([
-    db.query('SELECT id,name FROM categories WHERE organization_id=$1 AND active=true ORDER BY name',[organizationId]),
-    db.query('SELECT id,name,symbol,allow_fraction FROM units WHERE organization_id=$1 AND active=true ORDER BY name',[organizationId]),
-    db.query('SELECT id,name FROM manufacturers WHERE organization_id=$1 AND active=true ORDER BY name',[organizationId])
-  ]);
-  return {categories:categories.rows,units:units.rows,manufacturers:manufacturers.rows};
-}
-
-async function create(db,data){
-  const {rows}=await db.query(
-    `INSERT INTO medicines(
-      organization_id,category_id,manufacturer_id,base_unit_id,name,generic_name,
-      brand_name,strength,dosage_form,sku,default_selling_price,reorder_level,
-      prescription_required,track_expiry,description,created_by
-    )
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
-    RETURNING *`,
-    [
-      data.organizationId,data.categoryId||null,data.manufacturerId||null,
-      data.baseUnitId||null,data.name,data.genericName||null,data.brandName||null,
-      data.strength||null,data.dosageForm||null,data.sku||null,data.sellingPrice||0,
-      data.reorderLevel||0,!!data.prescriptionRequired,data.trackExpiry!==false,
-      data.description||null,data.userId
-    ]
-  );
-
-  if(data.barcode){
-    await db.query(
-      'INSERT INTO medicine_barcodes(medicine_id,barcode,is_primary) VALUES($1,$2,true)',
-      [rows[0].id,data.barcode]
-    );
-  }
-
-  return rows[0];
-}
-
-async function byBarcode(db,organizationId,branchId,barcode){
-  const {rows}=await db.query(
-    `SELECT
-      m.id,m.name,m.generic_name,m.brand_name,m.strength,m.default_selling_price,m.image_path,
-      u.name unit_name,u.symbol unit,COALESCE(u.allow_fraction,false) allow_fraction,
-      COALESCE(sum(b.quantity_available) FILTER(
-        WHERE b.status='SALEABLE'
-          AND (b.expiry_date IS NULL OR b.expiry_date>=current_date)
-      ),0) stock
-     FROM medicine_barcodes mb
-     JOIN medicines m ON m.id=mb.medicine_id
-     LEFT JOIN units u ON u.id=m.base_unit_id
-     LEFT JOIN medicine_batches b ON b.medicine_id=m.id AND b.branch_id=$2
-     WHERE m.organization_id=$1
-       AND mb.barcode=$3
-       AND m.active=true
-     GROUP BY m.id,u.id`,
-    [organizationId,branchId,barcode]
-  );
-  return rows[0]||null;
-}
-
-async function quantityRule(db,organizationId,medicineId){
-  const {rows}=await db.query(
-    `SELECT
-      m.id,m.name,
-      u.name unit_name,
-      u.symbol unit,
-      COALESCE(u.allow_fraction,false) allow_fraction
-     FROM medicines m
-     LEFT JOIN units u ON u.id=m.base_unit_id
-     WHERE m.organization_id=$1
-       AND m.id=$2
-       AND m.active=true
-     LIMIT 1`,
-    [organizationId,medicineId]
-  );
-  return rows[0]||null;
-}
-
-module.exports={list,masters,create,byBarcode,quantityRule};
+async function list(db,organizationId,q='',branchId=null){const term=`%${q.trim()}%`;const {rows}=await db.query(`SELECT m.id,m.name,m.generic_name,m.brand_name,m.strength,m.dosage_form,m.sku,m.default_selling_price,m.reorder_level,m.image_path,c.name category,u.name unit_name,u.symbol unit,COALESCE(u.allow_fraction,false) allow_fraction,(SELECT barcode FROM medicine_barcodes mb WHERE mb.medicine_id=m.id ORDER BY is_primary DESC,id LIMIT 1) barcode,CASE WHEN $4::bigint IS NULL THEN NULL ELSE COALESCE((SELECT SUM(b.quantity_available) FROM medicine_batches b WHERE b.medicine_id=m.id AND b.branch_id=$4 AND b.status='SALEABLE' AND b.quantity_available>0 AND (b.expiry_date IS NULL OR b.expiry_date>=current_date)),0) END saleable_stock FROM medicines m LEFT JOIN categories c ON c.id=m.category_id LEFT JOIN units u ON u.id=m.base_unit_id WHERE m.organization_id=$1 AND m.active=true AND ($2='' OR m.name ILIKE $3 OR COALESCE(m.generic_name,'') ILIKE $3 OR COALESCE(m.brand_name,'') ILIKE $3 OR COALESCE(m.sku,'') ILIKE $3 OR EXISTS(SELECT 1 FROM medicine_barcodes mb WHERE mb.medicine_id=m.id AND mb.barcode ILIKE $3) OR EXISTS(SELECT 1 FROM medicine_units mu WHERE mu.medicine_id=m.id AND mu.active=true AND mu.barcode ILIKE $3)) ORDER BY m.name LIMIT 100`,[organizationId,q.trim(),term,branchId]);return rows;}
+async function masters(db,organizationId){const [categories,units,manufacturers]=await Promise.all([db.query('SELECT id,name FROM categories WHERE organization_id=$1 AND active=true ORDER BY name',[organizationId]),db.query('SELECT id,name,symbol,allow_fraction FROM units WHERE organization_id=$1 AND active=true ORDER BY name',[organizationId]),db.query('SELECT id,name FROM manufacturers WHERE organization_id=$1 AND active=true ORDER BY name',[organizationId])]);return {categories:categories.rows,units:units.rows,manufacturers:manufacturers.rows};}
+async function create(db,data){const {rows}=await db.query(`INSERT INTO medicines(organization_id,category_id,manufacturer_id,base_unit_id,name,generic_name,brand_name,strength,dosage_form,sku,default_selling_price,reorder_level,prescription_required,track_expiry,description,image_path,created_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING *`,[data.organizationId,data.categoryId||null,data.manufacturerId||null,data.baseUnitId||null,data.name,data.genericName||null,data.brandName||null,data.strength||null,data.dosageForm||null,data.sku||null,data.sellingPrice||0,data.reorderLevel||0,!!data.prescriptionRequired,data.trackExpiry!==false,data.description||null,data.imagePath||null,data.userId]);if(data.barcode)await db.query('INSERT INTO medicine_barcodes(medicine_id,barcode,is_primary) VALUES($1,$2,true)',[rows[0].id,data.barcode]);return rows[0];}
+async function stockFor(db,medicineId,branchId){const {rows}=await db.query(`SELECT COALESCE(SUM(quantity_available) FILTER(WHERE status='SALEABLE' AND quantity_available>0 AND (expiry_date IS NULL OR expiry_date>=current_date)),0) stock FROM medicine_batches WHERE medicine_id=$1 AND branch_id=$2`,[medicineId,branchId]);return Number(rows[0].stock||0);}
+async function byBarcode(db,organizationId,branchId,barcode){let {rows}=await db.query(`SELECT m.id,m.name,m.generic_name,m.brand_name,m.strength,m.default_selling_price,m.image_path,u.name unit_name,u.symbol unit,COALESCE(u.allow_fraction,false) allow_fraction,1::numeric conversion_to_base,NULL::bigint medicine_unit_id,NULL::varchar sale_unit_name,NULL::numeric sale_unit_price FROM medicine_barcodes mb JOIN medicines m ON m.id=mb.medicine_id LEFT JOIN units u ON u.id=m.base_unit_id WHERE m.organization_id=$1 AND mb.barcode=$2 AND m.active=true LIMIT 1`,[organizationId,barcode]);let item=rows[0];if(!item){rows=(await db.query(`SELECT m.id,m.name,m.generic_name,m.brand_name,m.strength,m.default_selling_price,m.image_path,u.name unit_name,u.symbol unit,false allow_fraction,mu.conversion_to_base,mu.id medicine_unit_id,mu.name sale_unit_name,mu.selling_price sale_unit_price FROM medicine_units mu JOIN medicines m ON m.id=mu.medicine_id LEFT JOIN units u ON u.id=m.base_unit_id WHERE m.organization_id=$1 AND mu.barcode=$2 AND mu.active=true AND m.active=true LIMIT 1`,[organizationId,barcode])).rows;item=rows[0];}if(!item)return null;item.stock=await stockFor(db,item.id,branchId);return item;}
+async function get(db,organizationId,id){const medicine=(await db.query('SELECT * FROM medicines WHERE organization_id=$1 AND id=$2 LIMIT 1',[organizationId,id])).rows[0];if(!medicine)return null;const [barcodes,packages]=await Promise.all([db.query('SELECT * FROM medicine_barcodes WHERE medicine_id=$1 ORDER BY is_primary DESC,id',[id]),db.query('SELECT * FROM medicine_units WHERE medicine_id=$1 AND active=true ORDER BY conversion_to_base,name',[id])]);return {medicine,barcodes:barcodes.rows,packages:packages.rows};}
+async function update(db,organizationId,id,d){const {rows}=await db.query(`UPDATE medicines SET category_id=$3,manufacturer_id=$4,base_unit_id=$5,name=$6,generic_name=$7,brand_name=$8,strength=$9,dosage_form=$10,sku=$11,default_selling_price=$12,reorder_level=$13,prescription_required=$14,track_expiry=$15,description=$16,image_path=$17,updated_at=now() WHERE organization_id=$1 AND id=$2 RETURNING *`,[organizationId,id,d.categoryId||null,d.manufacturerId||null,d.baseUnitId||null,d.name,d.genericName||null,d.brandName||null,d.strength||null,d.dosageForm||null,d.sku||null,d.sellingPrice,d.reorderLevel,!!d.prescriptionRequired,d.trackExpiry!==false,d.description||null,d.imagePath||null]);return rows[0]||null;}
+async function stockTotal(db,id){const {rows}=await db.query('SELECT COALESCE(SUM(quantity_available),0) qty FROM medicine_batches WHERE medicine_id=$1 AND quantity_available>0',[id]);return Number(rows[0].qty||0);}
+async function deactivate(db,organizationId,id){const {rows}=await db.query('UPDATE medicines SET active=false,updated_at=now() WHERE organization_id=$1 AND id=$2 RETURNING *',[organizationId,id]);return rows[0]||null;}
+async function addBarcode(db,medicineId,barcode,isPrimary=false){if(isPrimary)await db.query('UPDATE medicine_barcodes SET is_primary=false WHERE medicine_id=$1',[medicineId]);const {rows}=await db.query('INSERT INTO medicine_barcodes(medicine_id,barcode,is_primary) VALUES($1,$2,$3) RETURNING *',[medicineId,barcode,isPrimary]);return rows[0];}
+async function removeBarcode(db,medicineId,id){await db.query('DELETE FROM medicine_barcodes WHERE medicine_id=$1 AND id=$2',[medicineId,id]);}
+async function addPackage(db,medicineId,d){const {rows}=await db.query(`INSERT INTO medicine_units(medicine_id,name,conversion_to_base,barcode,selling_price) VALUES($1,$2,$3,$4,$5) RETURNING *`,[medicineId,d.name,d.conversion,d.barcode||null,d.price]);return rows[0];}
+async function removePackage(db,medicineId,id){await db.query('UPDATE medicine_units SET active=false WHERE medicine_id=$1 AND id=$2',[medicineId,id]);}
+async function quantityRule(db,organizationId,medicineId){const {rows}=await db.query(`SELECT m.id,m.name,u.name unit_name,u.symbol unit,COALESCE(u.allow_fraction,false) allow_fraction FROM medicines m LEFT JOIN units u ON u.id=m.base_unit_id WHERE m.organization_id=$1 AND m.id=$2 AND m.active=true LIMIT 1`,[organizationId,medicineId]);return rows[0]||null;}
+module.exports={list,masters,create,byBarcode,get,update,stockTotal,deactivate,addBarcode,removeBarcode,addPackage,removePackage,quantityRule};

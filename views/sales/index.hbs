@@ -1,0 +1,6 @@
+<section class="mt-page">
+<div class="mt-page-header"><div><p class="mt-eyebrow">SALES</p><h1>Sales history</h1><p>Completed pharmacy transactions and receipts.</p></div><a href="/pos" class="mt-btn mt-btn-primary mt-btn-lg">New sale</a></div>
+<div class="mt-toolbar"><form class="mt-filter-form"><input name="q" value="{{q}}" placeholder="Sale number or customer"><input type="date" name="from" value="{{from}}"><input type="date" name="to" value="{{to}}"><button class="mt-btn mt-btn-primary">Filter</button></form></div>
+<article class="mt-panel mt-panel-flush"><div class="mt-table-wrap"><table class="mt-table"><thead><tr><th>Sale</th><th>Date</th><th>Customer</th><th>Cashier</th><th>Payment</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>
+{{#each sales}}<tr><td><strong>{{sale_number}}</strong></td><td>{{dateTime created_at}}</td><td>{{#if customer}}{{customer}}{{else}}Walk-in{{/if}}</td><td>{{cashier}}</td><td>{{payment_methods}}</td><td><strong>TZS {{money total}}</strong></td><td><span class="mt-status mt-status-success">{{status}}</span></td><td class="mt-text-right"><a class="mt-action-link" href="/sales/{{id}}">View</a></td></tr>{{else}}<tr><td colspan="8"><div class="mt-empty-state">No sales found.</div></td></tr>{{/each}}
+</tbody></table></div></article></section>

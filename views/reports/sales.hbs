@@ -1,3 +1,46 @@
-<div class="d-flex justify-content-between align-items-end mb-3"><h2>Sales report</h2><form class="d-flex gap-2"><input class="form-control" type="date" name="from" value="{{from}}"><input class="form-control" type="date" name="to" value="{{to}}"><button class="btn btn-outline-secondary">Apply</button></form></div>
-<div class="row g-3 mb-3"><div class="col-md-3"><div class="card p-3"><div class="text-muted">Revenue</div><h4>TZS {{money summary.revenue}}</h4></div></div><div class="col-md-3"><div class="card p-3"><div class="text-muted">Cost</div><h4>TZS {{money summary.cost}}</h4></div></div><div class="col-md-3"><div class="card p-3"><div class="text-muted">Gross profit</div><h4>TZS {{money summary.gross_profit}}</h4></div></div><div class="col-md-3"><div class="card p-3"><div class="text-muted">Transactions</div><h4>{{summary.transactions}}</h4></div></div></div>
-<div class="card table-responsive"><table class="table mb-0"><thead><tr><th>Date</th><th>Transactions</th><th>Revenue</th></tr></thead><tbody>{{#each days}}<tr><td>{{sale_date}}</td><td>{{transactions}}</td><td>TZS {{money revenue}}</td></tr>{{/each}}</tbody></table></div>
+<section class="mt-page">
+  <div class="mt-report-nav">
+    <a class="is-active" href="/reports/sales">Sales</a>
+    <a href="/reports/inventory">Inventory</a>
+    <a href="/reports/purchases">Purchases</a>
+    <a href="/reports/expiry">Expiry</a>
+  </div>
+
+  <div class="mt-page-header">
+    <div>
+      <p class="mt-eyebrow">REPORTS</p>
+      <h1>Sales & profit</h1>
+      <p>Net revenue and historical batch cost for the selected period.</p>
+    </div>
+  </div>
+
+  <div class="mt-toolbar">
+    <form class="mt-filter-form">
+      <label>From<input type="date" name="from" value="{{from}}"></label>
+      <label>To<input type="date" name="to" value="{{to}}"></label>
+      <button class="mt-btn mt-btn-primary">Apply</button>
+    </form>
+  </div>
+
+  <div class="mt-metric-grid">
+    <article class="mt-metric-card"><div><span>Net revenue</span><strong>TZS {{money summary.revenue}}</strong></div></article>
+    <article class="mt-metric-card"><div><span>Net cost</span><strong>TZS {{money summary.cost}}</strong></div></article>
+    <article class="mt-metric-card"><div><span>Gross profit</span><strong>TZS {{money summary.gross_profit}}</strong></div></article>
+    <article class="mt-metric-card"><div><span>Transactions</span><strong>{{summary.transactions}}</strong></div></article>
+  </div>
+
+  <article class="mt-panel mt-panel-flush">
+    <div class="mt-table-wrap">
+      <table class="mt-table">
+        <thead><tr><th>Date</th><th>Transactions</th><th>Net revenue</th></tr></thead>
+        <tbody>
+          {{#each days}}
+          <tr><td>{{date sale_date}}</td><td>{{transactions}}</td><td><strong>TZS {{money revenue}}</strong></td></tr>
+          {{else}}
+          <tr><td colspan="3"><div class="mt-empty-state">No sales for this period.</div></td></tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>

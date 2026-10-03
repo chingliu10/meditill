@@ -1,0 +1,5 @@
+const {pool}=require('../../config/db');const repo=require('./transfer.repository');const service=require('./transfer.service');const {setFlash}=require('../../shared/flash');
+async function index(req,res,next){try{const [transfers,destinations,batches]=await Promise.all([repo.list(pool,req.session.user.organization_id,req.branch.id),repo.destinations(pool,req.session.user.organization_id,req.branch.id),repo.sourceBatches(pool,req.branch.id)]);res.render('transfers/index',{title:'Transfers',transfers,destinations,batches});}catch(e){next(e);}}
+async function send(req,res,next){try{const t=await service.send(req.body,{user:req.session.user,branch:req.branch});setFlash(req,'success',`Transfer ${t.transfer_number} sent.`);res.redirect('/transfers');}catch(e){next(e);}}
+async function receive(req,res,next){try{await service.receive(Number(req.params.id),{user:req.session.user,branch:req.branch});setFlash(req,'success','Transfer received and stock posted.');res.redirect('/transfers');}catch(e){next(e);}}
+module.exports={index,send,receive};

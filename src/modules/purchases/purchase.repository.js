@@ -1,115 +1,19 @@
-async function list(db,organizationId,branchId){
-  const {rows}=await db.query(
-    `SELECT p.id,p.purchase_number,p.purchase_date,p.total,p.status,p.payment_status,s.name supplier
-     FROM purchases p
-     LEFT JOIN suppliers s ON s.id=p.supplier_id
-     WHERE p.organization_id=$1
-       AND p.branch_id=$2
-     ORDER BY p.purchase_date DESC
-     LIMIT 100`,
-    [organizationId,branchId]
-  );
-  return rows;
-}
-
-async function masters(db,organizationId){
-  const suppliers=await db.query(
-    'SELECT id,name FROM suppliers WHERE organization_id=$1 AND active=true ORDER BY name LIMIT 20',
-    [organizationId]
-  );
-  return {suppliers:suppliers.rows};
-}
-
-async function medicineRule(db,organizationId,medicineId){
-  const {rows}=await db.query(
-    `SELECT
-      m.id,m.name,
-      u.name unit_name,
-      u.symbol unit,
-      COALESCE(u.allow_fraction,false) allow_fraction
-     FROM medicines m
-     LEFT JOIN units u ON u.id=m.base_unit_id
-     WHERE m.organization_id=$1
-       AND m.id=$2
-       AND m.active=true
-     LIMIT 1`,
-    [organizationId,medicineId]
-  );
-  return rows[0]||null;
-}
-
-async function insertPurchase(db,data){
-  const {rows}=await db.query(
-    `INSERT INTO purchases(
-      organization_id,branch_id,supplier_id,purchase_number,supplier_invoice_number,
-      purchase_date,subtotal,discount,tax,total,status,payment_status,notes,created_by,received_at
-    )
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'RECEIVED',$11,$12,$13,now())
-    RETURNING *`,
-    [
-      data.organizationId,data.branchId,data.supplierId||null,data.purchaseNumber,
-      data.supplierInvoiceNumber||null,data.purchaseDate||new Date(),data.subtotal,
-      data.discount,data.tax,data.total,data.paymentStatus,data.notes||null,data.userId
-    ]
-  );
-  return rows[0];
-}
-
-async function insertItem(db,purchaseId,item){
-  const {rows}=await db.query(
-    `INSERT INTO purchase_items(
-      purchase_id,medicine_id,quantity,unit_cost,selling_price,batch_number,
-      manufacturing_date,expiry_date,line_total
-    )
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)
-    RETURNING *`,
-    [
-      purchaseId,item.medicineId,item.quantity,item.unitCost,item.sellingPrice||null,
-      item.batchNumber||null,item.manufacturingDate||null,item.expiryDate||null,
-      item.quantity*item.unitCost
-    ]
-  );
-  return rows[0];
-}
-
-async function createBatch(db,ctx,item,purchaseItemId){
-  const {rows}=await db.query(
-    `INSERT INTO medicine_batches(
-      organization_id,branch_id,medicine_id,purchase_item_id,batch_number,
-      manufacturing_date,expiry_date,unit_cost,default_selling_price,
-      quantity_received,quantity_available,status
-    )
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10,'SALEABLE')
-    RETURNING *`,
-    [
-      ctx.organizationId,ctx.branchId,item.medicineId,purchaseItemId,
-      item.batchNumber||null,item.manufacturingDate||null,item.expiryDate||null,
-      item.unitCost,item.sellingPrice||null,item.quantity
-    ]
-  );
-  return rows[0];
-}
-
-async function stockMovement(db,ctx,batch,item,purchaseId){
-  await db.query(
-    `INSERT INTO stock_movements(
-      organization_id,branch_id,medicine_id,batch_id,movement_type,quantity,
-      unit_cost,reference_type,reference_id,performed_by
-    )
-    VALUES($1,$2,$3,$4,'PURCHASE',$5,$6,'PURCHASE',$7,$8)`,
-    [
-      ctx.organizationId,ctx.branchId,item.medicineId,batch.id,item.quantity,
-      item.unitCost,purchaseId,ctx.userId
-    ]
-  );
-}
-
-module.exports={
-  list,
-  masters,
-  medicineRule,
-  insertPurchase,
-  insertItem,
-  createBatch,
-  stockMovement
-};
+async function list(db,organizationId,branchId){const {rows}=await db.query(`SELECT p.id,p.purchase_number,p.purchase_date,p.total,p.status,p.payment_status,s.name supplier FROM purchases p LEFT JOIN suppliers s ON s.id=p.supplier_id WHERE p.organization_id=$1 AND p.branch_id=$2 ORDER BY p.purchase_date DESC LIMIT 100`,[organizationId,branchId]);return rows;}
+async function masters(db,organizationId){const suppliers=await db.query('SELECT id,name FROM suppliers WHERE organization_id=$1 AND active=true ORDER BY name LIMIT 20',[organizationId]);return {suppliers:suppliers.rows};}
+async function medicineRule(db,organizationId,medicineId){const {rows}=await db.query(`SELECT m.id,m.name,u.name unit_name,u.symbol unit,COALESCE(u.allow_fraction,false) allow_fraction FROM medicines m LEFT JOIN units u ON u.id=m.base_unit_id WHERE m.organization_id=$1 AND m.id=$2 AND m.active=true LIMIT 1`,[organizationId,medicineId]);return rows[0]||null;}
+async function insertPurchase(db,data){const {rows}=await db.query(`INSERT INTO purchases(organization_id,branch_id,supplier_id,purchase_number,supplier_invoice_number,purchase_date,subtotal,discount,tax,total,status,payment_status,notes,created_by,received_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'RECEIVED',$11,$12,$13,now()) RETURNING *`,[data.organizationId,data.branchId,data.supplierId||null,data.purchaseNumber,data.supplierInvoiceNumber||null,data.purchaseDate||new Date(),data.subtotal,data.discount,data.tax,data.total,data.paymentStatus,data.notes||null,data.userId]);return rows[0];}
+async function insertItem(db,purchaseId,item){const {rows}=await db.query(`INSERT INTO purchase_items(purchase_id,medicine_id,quantity,unit_cost,selling_price,batch_number,manufacturing_date,expiry_date,line_total) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,[purchaseId,item.medicineId,item.quantity,item.unitCost,item.sellingPrice||null,item.batchNumber||null,item.manufacturingDate||null,item.expiryDate||null,item.quantity*item.unitCost]);return rows[0];}
+async function createBatch(db,ctx,item,purchaseItemId){const {rows}=await db.query(`INSERT INTO medicine_batches(organization_id,branch_id,medicine_id,purchase_item_id,batch_number,manufacturing_date,expiry_date,unit_cost,default_selling_price,quantity_received,quantity_available,status) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$10,'SALEABLE') RETURNING *`,[ctx.organizationId,ctx.branchId,item.medicineId,purchaseItemId,item.batchNumber||null,item.manufacturingDate||null,item.expiryDate||null,item.unitCost,item.sellingPrice||null,item.quantity]);return rows[0];}
+async function stockMovement(db,ctx,batch,item,purchaseId){await db.query(`INSERT INTO stock_movements(organization_id,branch_id,medicine_id,batch_id,movement_type,quantity,unit_cost,reference_type,reference_id,performed_by) VALUES($1,$2,$3,$4,'PURCHASE',$5,$6,'PURCHASE',$7,$8)`,[ctx.organizationId,ctx.branchId,item.medicineId,batch.id,item.quantity,item.unitCost,purchaseId,ctx.userId]);}
+async function detail(db,organizationId,branchId,id,lock=false){const suffix=lock?' FOR UPDATE':'';const purchase=(await db.query(`SELECT p.*,s.name supplier,s.phone supplier_phone FROM purchases p LEFT JOIN suppliers s ON s.id=p.supplier_id WHERE p.organization_id=$1 AND p.branch_id=$2 AND p.id=$3${suffix}`,[organizationId,branchId,id])).rows[0];if(!purchase)return null;const items=(await db.query(`SELECT pi.*,m.name,m.strength,b.id batch_id,b.quantity_available FROM purchase_items pi JOIN medicines m ON m.id=pi.medicine_id LEFT JOIN medicine_batches b ON b.purchase_item_id=pi.id WHERE pi.purchase_id=$1 ORDER BY pi.id`,[id])).rows;const payments=(await db.query('SELECT * FROM purchase_payments WHERE purchase_id=$1 ORDER BY created_at',[id])).rows;const returns=(await db.query('SELECT * FROM purchase_returns WHERE purchase_id=$1 ORDER BY created_at DESC',[id])).rows;return {purchase,items,payments,returns};}
+async function openRegister(db,userId,branchId){const {rows}=await db.query('SELECT id FROM register_sessions WHERE user_id=$1 AND branch_id=$2 AND status=\'OPEN\' LIMIT 1',[userId,branchId]);return rows[0]||null;}
+async function addPayment(db,d){const {rows}=await db.query(`INSERT INTO purchase_payments(purchase_id,register_session_id,payment_method,amount,reference,created_by) VALUES($1,$2,$3,$4,$5,$6) RETURNING *`,[d.purchaseId,d.registerSessionId||null,d.method,d.amount,d.reference||null,d.userId]);return rows[0];}
+async function cashOut(db,sessionId,amount,purchaseId,userId){await db.query(`INSERT INTO register_movements(register_session_id,movement_type,amount,reference_type,reference_id,performed_by) VALUES($1,'CASH_OUT',$2,'PURCHASE',$3,$4)`,[sessionId,amount,purchaseId,userId]);}
+async function paidTotal(db,purchaseId){const {rows}=await db.query('SELECT COALESCE(SUM(amount),0) total FROM purchase_payments WHERE purchase_id=$1',[purchaseId]);return Number(rows[0].total||0);}
+async function paymentStatus(db,purchaseId,status){await db.query('UPDATE purchases SET payment_status=$2 WHERE id=$1',[purchaseId,status]);}
+async function lockBatch(db,batchId,branchId){const {rows}=await db.query('SELECT * FROM medicine_batches WHERE id=$1 AND branch_id=$2 FOR UPDATE',[batchId,branchId]);return rows[0]||null;}
+async function createReturn(db,d){const {rows}=await db.query(`INSERT INTO purchase_returns(organization_id,branch_id,purchase_id,return_number,reason,total_value,created_by) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *`,[d.organizationId,d.branchId,d.purchaseId,d.number,d.reason,d.total,d.userId]);return rows[0];}
+async function returnItem(db,d){await db.query(`INSERT INTO purchase_return_items(purchase_return_id,purchase_item_id,batch_id,quantity,unit_cost,line_total) VALUES($1,$2,$3,$4,$5,$6)`,[d.returnId,d.purchaseItemId,d.batchId,d.quantity,d.cost,d.quantity*d.cost]);}
+async function deductBatch(db,batchId,qty){await db.query(`UPDATE medicine_batches SET quantity_available=quantity_available-$2,status=CASE WHEN quantity_available-$2=0 THEN 'DEPLETED' ELSE status END WHERE id=$1`,[batchId,qty]);}
+async function returnMovement(db,d){await db.query(`INSERT INTO stock_movements(organization_id,branch_id,medicine_id,batch_id,movement_type,quantity,unit_cost,reference_type,reference_id,notes,performed_by) VALUES($1,$2,$3,$4,'PURCHASE_RETURN',$5,$6,'PURCHASE_RETURN',$7,$8,$9)`,[d.organizationId,d.branchId,d.medicineId,d.batchId,-d.quantity,d.cost,d.returnId,d.reason,d.userId]);}
+module.exports={list,masters,medicineRule,insertPurchase,insertItem,createBatch,stockMovement,detail,openRegister,addPayment,cashOut,paidTotal,paymentStatus,lockBatch,createReturn,returnItem,deductBatch,returnMovement};

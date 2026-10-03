@@ -1,0 +1,1 @@
+const router=require('express').Router();const {requireAuth}=require('../../middleware/auth.middleware');const {requirePermission}=require('../../middleware/permission.middleware');const c=require('./role.controller');router.use(requireAuth,requirePermission('roles.manage'));router.get('/',c.index);router.post('/',c.create);module.exports=router;

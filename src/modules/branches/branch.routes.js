@@ -1,5 +1,1 @@
-const router=require('express').Router();
-const {requireAuth}=require('../../middleware/auth.middleware');
-const c=require('./branch.controller');
-router.post('/switch',requireAuth,c.switchBranch);
-module.exports=router;
+const router=require('express').Router();const {requireAuth}=require('../../middleware/auth.middleware');const {requirePermission}=require('../../middleware/permission.middleware');const c=require('./branch.controller');router.post('/switch',requireAuth,c.switchBranch);router.get('/',requireAuth,requirePermission('branches.manage'),c.index);router.post('/',requireAuth,requirePermission('branches.manage'),c.create);module.exports=router;

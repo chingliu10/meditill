@@ -1,0 +1,3 @@
+const {withTransaction}=require('../../config/db');const repo=require('./role.repository');const {appError}=require('../../shared/app-error');
+async function createRole(input,ctx){const name=String(input.name||'').trim();const ids=Array.isArray(input.permission_ids)?input.permission_ids:[input.permission_ids].filter(Boolean);if(!name)throw appError('Role name is required');return withTransaction(async client=>{const allowed=await repo.permissions(client);const role=await repo.create(client,ctx.user.organization_id,name,String(input.description||'').trim());for(const id of ids.map(Number)){if(allowed.some(p=>Number(p.id)===id))await repo.addPermission(client,role.id,id);}return role;});}
+module.exports={createRole};
