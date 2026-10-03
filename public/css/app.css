@@ -1,5 +1,16 @@
-:root{--mt:#0f766e;--mt-dark:#134e4a;--bg:#f4f7f8}
-body{background:var(--bg);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+:root{
+  --mt:#0f766e;
+  --mt-dark:#134e4a;
+  --bg:#f4f7f8;
+  --surface:#fff;
+  --text:#172033;
+  --muted:#64748b;
+  --border:#e2e8f0;
+  --success:#0f9f6e;
+  --warning:#d97706;
+  --danger:#dc2626;
+}
+body{background:var(--bg);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--text)}
 .navbar-brand{font-weight:800;letter-spacing:.2px}
 .sidebar{min-height:calc(100vh - 56px);background:#fff;border-right:1px solid #e5e7eb}
 .sidebar .nav-link{color:#334155;border-radius:.5rem;margin:.1rem .5rem}
@@ -11,4 +22,79 @@ body{background:var(--bg);font-family:Inter,system-ui,-apple-system,Segoe UI,san
 .touch-btn{min-height:52px;font-size:1.05rem}
 .product-tile{min-height:92px;cursor:pointer}
 .product-tile:hover{outline:2px solid #99f6e4}
-@media(max-width:991px){.sidebar{display:none}.pos-shell{height:auto}.pos-cart{min-height:45vh}}
+
+/* Toast notifications */
+.mt-toast-host{
+  position:fixed;
+  top:72px;
+  right:18px;
+  z-index:2000;
+  display:grid;
+  gap:10px;
+  width:min(390px,calc(100vw - 28px));
+  pointer-events:none;
+}
+.mt-toast{
+  display:grid;
+  grid-template-columns:24px 1fr 26px;
+  align-items:center;
+  gap:10px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-left:4px solid var(--mt);
+  box-shadow:0 12px 35px rgba(15,23,42,.16);
+  border-radius:10px;
+  padding:12px 12px;
+  opacity:0;
+  transform:translateY(-8px);
+  transition:.18s ease;
+  pointer-events:auto;
+}
+.mt-toast.is-visible{opacity:1;transform:translateY(0)}
+.mt-toast-success{border-left-color:var(--success)}
+.mt-toast-warning{border-left-color:var(--warning)}
+.mt-toast-danger,.mt-toast-error{border-left-color:var(--danger)}
+.mt-toast-icon::before{content:'✓';font-weight:800;color:var(--success)}
+.mt-toast-warning .mt-toast-icon::before{content:'!';color:var(--warning)}
+.mt-toast-danger .mt-toast-icon::before,.mt-toast-error .mt-toast-icon::before{content:'×';color:var(--danger)}
+.mt-toast-close{border:0;background:transparent;font-size:22px;line-height:1;color:#64748b}
+
+/* Searchable pickers */
+.mt-picker{position:relative}
+.mt-picker-menu{
+  position:absolute;
+  z-index:1050;
+  top:calc(100% + 4px);
+  left:0;
+  right:0;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:9px;
+  box-shadow:0 14px 30px rgba(15,23,42,.14);
+  max-height:260px;
+  overflow:auto;
+  display:none;
+}
+.mt-picker-menu.is-open{display:block}
+.mt-picker-item{
+  display:block;
+  width:100%;
+  border:0;
+  border-bottom:1px solid #f1f5f9;
+  background:#fff;
+  text-align:left;
+  padding:10px 12px;
+  cursor:pointer;
+}
+.mt-picker-item:last-child{border-bottom:0}
+.mt-picker-item:hover,.mt-picker-item.is-active{background:#ecfdf5}
+.mt-picker-title{display:block;font-weight:650;color:#172033}
+.mt-picker-meta{display:block;font-size:.8rem;color:#64748b;margin-top:2px}
+.mt-picker-empty{padding:12px;color:#64748b}
+
+@media(max-width:991px){
+  .sidebar{display:none}
+  .pos-shell{height:auto}
+  .pos-cart{min-height:45vh}
+  .mt-toast-host{top:66px;left:14px;right:14px;width:auto}
+}

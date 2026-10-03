@@ -36,13 +36,25 @@ async function completeSale(input,ctx){
     let subtotal=0;
 
     for(const row of cart){
-      const medicineId=Number(row.medicine_id);
-      const med=await repo.medicine(client,ctx.user.organization_id,medicineId);
+      const med=await repo.medicine(
+        client,
+        ctx.user.organization_id,
+        Number(row.medicine_id)
+      );
+
       if(!med) throw appError('Medicine not found',404,'MEDICINE_NOT_FOUND');
 
       const quantity=Number(row.quantity);
       if(!Number.isFinite(quantity)||quantity<=0){
         throw appError('Invalid sale quantity');
+      }
+
+      if(!med.allow_fraction && !Number.isInteger(quantity)){
+        throw appError(
+          `${med.name} uses ${med.unit_name||'a countable unit'} and requires a whole-number quantity.`,
+          400,
+          'FRACTION_NOT_ALLOWED'
+        );
       }
 
       const unitPrice=row.unit_price===undefined

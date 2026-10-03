@@ -1,15 +1,16 @@
 const {pool}=require('../../config/db');
 const repo=require('./purchase.repository');
 const service=require('./purchase.service');
+const {setFlash}=require('../../shared/flash');
 
 async function index(req,res,next){
   try{
-    const purchases=await repo.list(pool,req.session.user.organization_id,req.branch.id);
-    res.render('purchases/index',{
-      title:'Purchases',
-      purchases,
-      success:req.query.received ? `Purchase ${req.query.received} received and stock posted.` : null
-    });
+    const purchases=await repo.list(
+      pool,
+      req.session.user.organization_id,
+      req.branch.id
+    );
+    res.render('purchases/index',{title:'Purchases',purchases});
   }catch(error){
     next(error);
   }
@@ -17,7 +18,10 @@ async function index(req,res,next){
 
 async function newForm(req,res,next){
   try{
-    const masters=await repo.masters(pool,req.session.user.organization_id);
+    const masters=await repo.masters(
+      pool,
+      req.session.user.organization_id
+    );
     res.render('purchases/new',{title:'Receive Purchase',...masters});
   }catch(error){
     next(error);
@@ -31,7 +35,7 @@ async function create(req,res,next){
       branch:req.branch
     });
 
-    console.info('[PURCHASE] Received', {
+    console.info('[PURCHASE] Received',{
       purchaseId:purchase.id,
       purchaseNumber:purchase.purchase_number,
       branchId:req.branch.id,
@@ -39,9 +43,15 @@ async function create(req,res,next){
       total:purchase.total
     });
 
-    res.redirect('/purchases?received='+encodeURIComponent(purchase.purchase_number));
+    setFlash(
+      req,
+      'success',
+      `Purchase ${purchase.purchase_number} received and stock posted successfully.`
+    );
+
+    res.redirect('/purchases');
   }catch(error){
-    console.warn('[PURCHASE] Receive failed', {
+    console.warn('[PURCHASE] Receive failed',{
       branchId:req.branch.id,
       userId:req.session.user.id,
       code:error.code||'PURCHASE_ERROR',

@@ -15,18 +15,15 @@ async function search(db,organizationId,branchId,q){
   const term=`%${String(q||'').trim()}%`;
   const {rows}=await db.query(
     `SELECT
-      m.id,
-      m.name,
-      m.generic_name,
-      m.brand_name,
-      m.strength,
-      m.default_selling_price,
+      m.id,m.name,m.generic_name,m.brand_name,m.strength,m.default_selling_price,
+      u.name unit_name,u.symbol unit,COALESCE(u.allow_fraction,false) allow_fraction,
       COALESCE(sum(b.quantity_available) FILTER(
         WHERE b.status='SALEABLE'
           AND b.quantity_available>0
           AND (b.expiry_date IS NULL OR b.expiry_date>=current_date)
       ),0) stock
      FROM medicines m
+     LEFT JOIN units u ON u.id=m.base_unit_id
      LEFT JOIN medicine_batches b
        ON b.medicine_id=m.id
       AND b.branch_id=$2
@@ -44,7 +41,7 @@ async function search(db,organizationId,branchId,q){
              AND mb.barcode ILIKE $4
          )
        )
-     GROUP BY m.id
+     GROUP BY m.id,u.id
      ORDER BY m.name
      LIMIT 40`,
     [organizationId,branchId,String(q||'').trim(),term]
@@ -70,11 +67,14 @@ async function lockBatches(db,medicineId,branchId){
 
 async function medicine(db,organizationId,id){
   const {rows}=await db.query(
-    `SELECT id,name,default_selling_price
-     FROM medicines
-     WHERE organization_id=$1
-       AND id=$2
-       AND active=true`,
+    `SELECT
+      m.id,m.name,m.default_selling_price,
+      u.name unit_name,u.symbol unit,COALESCE(u.allow_fraction,false) allow_fraction
+     FROM medicines m
+     LEFT JOIN units u ON u.id=m.base_unit_id
+     WHERE m.organization_id=$1
+       AND m.id=$2
+       AND m.active=true`,
     [organizationId,id]
   );
   return rows[0]||null;
@@ -140,9 +140,7 @@ async function movement(db,batchId,medicineId,ctx,qty,cost,saleId){
       unit_cost,reference_type,reference_id,performed_by
     )
     VALUES($1,$2,$3,$4,'SALE',$5,$6,'SALE',$7,$8)`,
-    [
-      ctx.organizationId,ctx.branchId,medicineId,batchId,-qty,cost,saleId,ctx.userId
-    ]
+    [ctx.organizationId,ctx.branchId,medicineId,batchId,-qty,cost,saleId,ctx.userId]
   );
 }
 
@@ -171,14 +169,6 @@ async function registerCash(db,sessionId,amount,saleId,userId){
 }
 
 module.exports={
-  openRegister,
-  search,
-  lockBatches,
-  medicine,
-  createSale,
-  createItem,
-  allocateBatch,
-  movement,
-  payment,
-  registerCash
+  openRegister,search,lockBatches,medicine,createSale,createItem,
+  allocateBatch,movement,payment,registerCash
 };

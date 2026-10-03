@@ -1,9 +1,83 @@
 <h2>Registers</h2>
-{{#if current}}<div class="card p-3"><h5>{{current.register_name}} is open</h5><div>Opening cash: TZS {{money current.opening_cash}}</div><div>Opened: {{current.opened_at}}</div>
-<form id="closeRegister" class="row g-2 mt-3"><div class="col-md-4"><input class="form-control" type="number" min="0" step="0.01" name="actual_cash" placeholder="Actual cash counted" required></div><div class="col"><button class="btn btn-danger">Close register</button></div></form></div>
-{{else}}<div class="card p-3"><h5>Open register</h5><form id="openRegister" class="row g-2"><div class="col-md-4"><select class="form-select" name="register_id" required>{{#each registers}}<option value="{{id}}">{{name}}</option>{{/each}}</select></div><div class="col-md-4"><input class="form-control" type="number" min="0" step="0.01" name="opening_cash" value="0" placeholder="Opening cash"></div><div class="col"><button class="btn btn-primary">Open</button></div></form></div>{{/if}}
+
+{{#if current}}
+<div class="card p-3">
+  <h5>{{current.register_name}} is open</h5>
+  <div>Opening cash: TZS {{money current.opening_cash}}</div>
+  <div>Opened: {{current.opened_at}}</div>
+
+  <form id="closeRegister" class="row g-2 mt-3">
+    <div class="col-md-4">
+      <input
+        class="form-control"
+        type="number"
+        min="0"
+        step="0.01"
+        name="actual_cash"
+        placeholder="Actual cash counted"
+        required
+      >
+    </div>
+    <div class="col">
+      <button class="btn btn-danger">Close register</button>
+    </div>
+  </form>
+</div>
+{{else}}
+<div class="card p-3">
+  <h5>Open register</h5>
+  <form id="openRegister" class="row g-2">
+    <div class="col-md-4">
+      <select class="form-select" name="register_id" required>
+        {{#each registers}}<option value="{{id}}">{{name}}</option>{{/each}}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <input
+        class="form-control"
+        type="number"
+        min="0"
+        step="0.01"
+        name="opening_cash"
+        value="0"
+        placeholder="Opening cash"
+      >
+    </div>
+    <div class="col">
+      <button class="btn btn-primary">Open</button>
+    </div>
+  </form>
+</div>
+{{/if}}
+
 <script>
-async function post(form,url){const data=Object.fromEntries(new FormData(form));const r=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(data)});const j=await r.json();if(!r.ok)throw new Error(j.error||'Failed');location.reload();}
-document.querySelector('#openRegister')?.addEventListener('submit',e=>{e.preventDefault();post(e.target,'/registers/api/open').catch(x=>alert(x.message))});
-document.querySelector('#closeRegister')?.addEventListener('submit',e=>{e.preventDefault();post(e.target,'/registers/api/close').then(()=>{}).catch(x=>alert(x.message))});
+async function postRegister(form,url,successMessage){
+  const data=Object.fromEntries(new FormData(form));
+  const response=await fetch(url,{
+    method:'POST',
+    headers:{'content-type':'application/json'},
+    body:JSON.stringify(data)
+  });
+  const result=await response.json();
+
+  if(!response.ok) throw new Error(result.error||'Operation failed');
+
+  sessionStorage.setItem('meditillToast',JSON.stringify({
+    type:'success',
+    message:successMessage
+  }));
+  location.reload();
+}
+
+document.querySelector('#openRegister')?.addEventListener('submit',event=>{
+  event.preventDefault();
+  postRegister(event.target,'/registers/api/open','Register opened successfully.')
+    .catch(error=>window.MediTillToast?.(error.message,'error'));
+});
+
+document.querySelector('#closeRegister')?.addEventListener('submit',event=>{
+  event.preventDefault();
+  postRegister(event.target,'/registers/api/close','Register closed and reconciled successfully.')
+    .catch(error=>window.MediTillToast?.(error.message,'error'));
+});
 </script>

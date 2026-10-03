@@ -1,10 +1,67 @@
 <h2 class="mb-3">Receive purchase</h2>
+
 <form method="post" action="/purchases" id="purchaseForm" class="card p-3">
-<div class="row g-3 mb-3"><div class="col-md-5"><label class="form-label">Supplier</label><select class="form-select" name="supplier_id"><option value="">—</option>{{#each suppliers}}<option value="{{id}}">{{name}}</option>{{/each}}</select></div>
-<div class="col-md-4"><label class="form-label">Supplier invoice</label><input class="form-control" name="supplier_invoice_number"></div>
-<div class="col-md-3"><label class="form-label">Date</label><input class="form-control" type="date" name="purchase_date"></div></div>
-<div class="table-responsive"><table class="table" id="itemsTable"><thead><tr><th>Medicine</th><th>Qty</th><th>Cost</th><th>Sell</th><th>Batch</th><th>Expiry</th><th></th></tr></thead><tbody></tbody></table></div>
-<button type="button" class="btn btn-outline-secondary mb-3" id="addRow">+ Add medicine</button>
-<div class="row g-3"><div class="col-md-3"><label class="form-label">Discount</label><input class="form-control" type="number" name="discount" value="0"></div><div class="col-md-3"><label class="form-label">Tax</label><input class="form-control" type="number" name="tax" value="0"></div><div class="col-md-6 d-flex align-items-end justify-content-end"><button class="btn btn-primary btn-lg">Receive stock</button></div></div>
-<script>window.MEDITILL_MEDICINES={{{json medicines}}};</script><script src="/js/purchase.js"></script>
+  <div class="row g-3 mb-3">
+    <div class="col-md-5">
+      <label class="form-label">Supplier</label>
+      <div class="mt-picker" data-supplier-picker>
+        <input type="hidden" name="supplier_id" id="supplierId">
+        <input
+          class="form-control"
+          id="supplierSearch"
+          autocomplete="off"
+          placeholder="Search supplier by name, contact or phone"
+        >
+        <div class="mt-picker-menu" id="supplierResults"></div>
+      </div>
+      <div class="form-text">Type to search instead of scrolling through a long list.</div>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Supplier invoice</label>
+      <input class="form-control" name="supplier_invoice_number">
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Date</label>
+      <input class="form-control" type="date" name="purchase_date">
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table align-middle" id="itemsTable">
+      <thead>
+        <tr>
+          <th style="min-width:260px">Medicine</th>
+          <th style="min-width:110px">Qty</th>
+          <th style="min-width:120px">Cost</th>
+          <th style="min-width:120px">Sell</th>
+          <th style="min-width:130px">Batch</th>
+          <th style="min-width:150px">Expiry</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <button type="button" class="btn btn-outline-secondary mb-3 align-self-start" id="addRow">
+    + Add medicine
+  </button>
+
+  <div class="row g-3">
+    <div class="col-md-3">
+      <label class="form-label">Discount</label>
+      <input class="form-control" type="number" min="0" step="0.01" name="discount" value="0">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Tax</label>
+      <input class="form-control" type="number" min="0" step="0.01" name="tax" value="0">
+    </div>
+    <div class="col-md-6 d-flex align-items-end justify-content-end">
+      <button class="btn btn-primary btn-lg">Receive stock</button>
+    </div>
+  </div>
 </form>
+
+<script src="/js/purchase.js"></script>

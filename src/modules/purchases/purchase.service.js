@@ -35,20 +35,42 @@ async function receivePurchase(input,context){
   const items=normalizeItems(input);
   if(!items.length) throw appError('At least one valid purchase item is required');
 
-  for(const item of items){
-    if(item.expiryDate && new Date(item.expiryDate+'T00:00:00')<startOfToday()){
-      throw appError('Cannot receive already expired stock');
-    }
-    if(item.manufacturingDate && item.expiryDate && item.manufacturingDate>item.expiryDate){
-      throw appError('Manufacturing date cannot be after expiry date');
-    }
-  }
-
   const discount=Math.max(0,Number(input.discount||0));
   const tax=Math.max(0,Number(input.tax||0));
-  if(!Number.isFinite(discount) || !Number.isFinite(tax)) throw appError('Invalid discount or tax');
+
+  if(!Number.isFinite(discount)||!Number.isFinite(tax)){
+    throw appError('Invalid discount or tax');
+  }
 
   return withTransaction(async client=>{
+    for(const item of items){
+      const medicine=await repo.medicineRule(
+        client,
+        context.user.organization_id,
+        item.medicineId
+      );
+
+      if(!medicine){
+        throw appError('One of the selected medicines no longer exists');
+      }
+
+      if(!medicine.allow_fraction && !Number.isInteger(item.quantity)){
+        throw appError(
+          `${medicine.name} uses ${medicine.unit_name||'a countable unit'} and requires a whole-number quantity.`,
+          400,
+          'FRACTION_NOT_ALLOWED'
+        );
+      }
+
+      if(item.expiryDate && new Date(item.expiryDate+'T00:00:00')<startOfToday()){
+        throw appError('Cannot receive already expired stock');
+      }
+
+      if(item.manufacturingDate && item.expiryDate && item.manufacturingDate>item.expiryDate){
+        throw appError('Manufacturing date cannot be after expiry date');
+      }
+    }
+
     const purchaseNumber=await nextDocumentNumber(
       client,
       context.user.organization_id,

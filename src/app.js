@@ -8,19 +8,29 @@ const compression = require('compression');
 const env = require('./config/env');
 const { pool } = require('./config/db');
 const { exposeUser } = require('./middleware/auth.middleware');
+const { exposeFlash } = require('./middleware/flash.middleware');
 const { notFound,errorHandler } = require('./middleware/error.middleware');
 
 const app = express();
 
-// MediTill is deployed behind Caddy in production. Trust the first reverse proxy
-// so Express recognizes HTTPS via X-Forwarded-Proto and can set secure session cookies.
 app.set('trust proxy', 1);
 
 app.engine('hbs', engine({
   extname: '.hbs',
   defaultLayout: 'main',
   helpers: {
-    money(value) { return Number(value || 0).toLocaleString('en-TZ',{minimumFractionDigits:0,maximumFractionDigits:2}); },
+    money(value) {
+      return Number(value || 0).toLocaleString('en-TZ',{
+        minimumFractionDigits:0,
+        maximumFractionDigits:2
+      });
+    },
+    quantity(value) {
+      return Number(value || 0).toLocaleString('en-TZ',{
+        minimumFractionDigits:0,
+        maximumFractionDigits:4
+      });
+    },
     json(value) { return JSON.stringify(value); },
     eq(a,b) { return a === b; }
   }
@@ -39,10 +49,17 @@ app.use(session({
   secret:env.sessionSecret,
   resave:false,
   saveUninitialized:false,
-  cookie:{httpOnly:true,sameSite:'lax',secure:env.nodeEnv==='production',maxAge:1000*60*60*12}
+  cookie:{
+    httpOnly:true,
+    sameSite:'lax',
+    secure:env.nodeEnv==='production',
+    maxAge:1000*60*60*12
+  }
 }));
 
+app.use(exposeFlash);
 app.use(exposeUser);
+
 app.use('/',require('./modules/auth/auth.routes'));
 app.use('/',require('./modules/dashboard/dashboard.routes'));
 app.use('/branches',require('./modules/branches/branch.routes'));
