@@ -1,0 +1,1 @@
+async function list(db,organizationId,branchId){const {rows}=await db.query('SELECT key,value FROM settings WHERE organization_id=$1 AND (branch_id IS NULL OR branch_id=$2) ORDER BY key',[organizationId,branchId]);return rows;}module.exports={list};

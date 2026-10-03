@@ -1,0 +1,12 @@
+const router=require('express').Router();
+const {requireAuth}=require('../../middleware/auth.middleware');
+const {requireBranch}=require('../../middleware/branch.middleware');
+const {requirePermission}=require('../../middleware/permission.middleware');
+const c=require('./medicine.controller');
+router.use(requireAuth,requireBranch);
+router.get('/',requirePermission('medicine.view'),c.index);
+router.get('/new',requirePermission('medicine.create'),c.newForm);
+router.post('/',requirePermission('medicine.create'),c.create);
+router.get('/api/search',requirePermission('medicine.view'),c.searchApi);
+router.get('/api/barcode/:barcode',requirePermission('medicine.view'),c.barcode);
+module.exports=router;

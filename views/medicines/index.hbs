@@ -1,0 +1,5 @@
+<div class="d-flex justify-content-between align-items-center mb-3"><h2>Medicines</h2><a class="btn btn-primary" href="/medicines/new">Add medicine</a></div>
+<form class="mb-3"><input class="form-control" name="q" value="{{q}}" placeholder="Search name, generic, brand, SKU or barcode"></form>
+<div class="card table-responsive"><table class="table mb-0"><thead><tr><th>Medicine</th><th>Generic</th><th>Strength</th><th>Barcode</th><th>Price</th></tr></thead><tbody>
+{{#each medicines}}<tr><td><strong>{{name}}</strong><div class="small text-muted">{{brand_name}}</div></td><td>{{generic_name}}</td><td>{{strength}}</td><td>{{barcode}}</td><td>TZS {{money default_selling_price}}</td></tr>{{else}}<tr><td colspan="5" class="text-center p-4">No medicines found.</td></tr>{{/each}}
+</tbody></table></div>

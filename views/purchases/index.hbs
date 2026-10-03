@@ -1,0 +1,4 @@
+<div class="d-flex justify-content-between mb-3"><h2>Purchases</h2><a href="/purchases/new" class="btn btn-primary">Receive stock</a></div>
+<div class="card table-responsive"><table class="table mb-0"><thead><tr><th>No.</th><th>Date</th><th>Supplier</th><th>Total</th><th>Status</th></tr></thead><tbody>
+{{#each purchases}}<tr><td>{{purchase_number}}</td><td>{{purchase_date}}</td><td>{{supplier}}</td><td>TZS {{money total}}</td><td>{{status}}</td></tr>{{else}}<tr><td colspan="5">No purchases yet.</td></tr>{{/each}}
+</tbody></table></div>

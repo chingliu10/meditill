@@ -1,0 +1,1 @@
+const {pool}=require('../../config/db');const repo=require('./settings.repository');async function index(req,res,next){try{res.json(await repo.list(pool,req.session.user.organization_id,req.branch.id));}catch(e){next(e);}}module.exports={index};

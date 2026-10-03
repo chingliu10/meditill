@@ -1,0 +1,20 @@
+<h2 class="mb-3">Add medicine</h2><form method="post" action="/medicines" class="card p-3 p-md-4">
+<div class="row g-3">
+<div class="col-md-6"><label class="form-label">Medicine name *</label><input class="form-control" name="name" required autofocus></div>
+<div class="col-md-6"><label class="form-label">Generic name</label><input class="form-control" name="generic_name"></div>
+<div class="col-md-4"><label class="form-label">Brand</label><input class="form-control" name="brand_name"></div>
+<div class="col-md-4"><label class="form-label">Strength</label><input class="form-control" name="strength" placeholder="500 mg"></div>
+<div class="col-md-4"><label class="form-label">Dosage form</label><input class="form-control" name="dosage_form" placeholder="Tablet"></div>
+<div class="col-md-6"><label class="form-label">Barcode</label><input class="form-control" name="barcode" autocomplete="off"></div>
+<div class="col-md-3"><label class="form-label">Selling price</label><input class="form-control" type="number" min="0" step="0.01" name="selling_price"></div>
+<div class="col-md-3"><label class="form-label">Reorder level</label><input class="form-control" type="number" min="0" step="0.0001" name="reorder_level"></div>
+<div class="col-md-4"><label class="form-label">Category</label><select class="form-select" name="category_id"><option value="">—</option>{{#each categories}}<option value="{{id}}">{{name}}</option>{{/each}}</select></div>
+<div class="col-md-4"><label class="form-label">Base unit</label><select class="form-select" name="base_unit_id"><option value="">—</option>{{#each units}}<option value="{{id}}">{{name}}</option>{{/each}}</select></div>
+<div class="col-md-4"><label class="form-label">Manufacturer</label><select class="form-select" name="manufacturer_id"><option value="">—</option>{{#each manufacturers}}<option value="{{id}}">{{name}}</option>{{/each}}</select></div>
+<div class="col-12"><details><summary class="mb-2">More details</summary><div class="row g-3">
+<div class="col-md-6"><label class="form-label">SKU</label><input class="form-control" name="sku"></div>
+<div class="col-md-6"><label class="form-label">Prescription required</label><div><input type="checkbox" name="prescription_required"> Yes</div></div>
+<div class="col-12"><label class="form-label">Description</label><textarea class="form-control" name="description"></textarea></div>
+</div></details></div>
+<div class="col-12"><button class="btn btn-primary btn-lg">Save medicine</button></div>
+</div></form>

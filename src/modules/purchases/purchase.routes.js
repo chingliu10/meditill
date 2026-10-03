@@ -1,0 +1,10 @@
+const router=require('express').Router();
+const {requireAuth}=require('../../middleware/auth.middleware');
+const {requireBranch}=require('../../middleware/branch.middleware');
+const {requirePermission}=require('../../middleware/permission.middleware');
+const c=require('./purchase.controller');
+router.use(requireAuth,requireBranch);
+router.get('/',requirePermission('purchase.view'),c.index);
+router.get('/new',requirePermission('purchase.create'),c.newForm);
+router.post('/',requirePermission('purchase.receive'),c.create);
+module.exports=router;
