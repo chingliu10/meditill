@@ -5,7 +5,12 @@ const {setFlash}=require('../../shared/flash');
 
 async function index(req,res,next){
   try{
-    const medicines=await repo.list(pool,req.session.user.organization_id,req.query.q||'');
+    const medicines=await repo.list(
+      pool,
+      req.session.user.organization_id,
+      req.query.q||'',
+      req.branch.id
+    );
     res.render('medicines/index',{title:'Medicines',medicines,q:req.query.q||''});
   }catch(error){
     next(error);
@@ -54,7 +59,8 @@ async function searchApi(req,res,next){
     const medicines=await repo.list(
       pool,
       req.session.user.organization_id,
-      req.query.q||''
+      req.query.q||'',
+      req.branch.id
     );
     res.json(medicines);
   }catch(error){

@@ -31,6 +31,41 @@ app.engine('hbs', engine({
         maximumFractionDigits:4
       });
     },
+    date(value) {
+      if(!value) return '—';
+      const date=new Date(value);
+      if(Number.isNaN(date.getTime())) return String(value);
+      return new Intl.DateTimeFormat('en-GB',{
+        day:'2-digit',
+        month:'short',
+        year:'numeric'
+      }).format(date);
+    },
+    dateTime(value) {
+      if(!value) return '—';
+      const date=new Date(value);
+      if(Number.isNaN(date.getTime())) return String(value);
+      return new Intl.DateTimeFormat('en-GB',{
+        day:'2-digit',
+        month:'short',
+        hour:'2-digit',
+        minute:'2-digit'
+      }).format(date);
+    },
+    stockClass(stock,reorder) {
+      const qty=Number(stock||0);
+      const level=Number(reorder||0);
+      if(qty<=0) return 'danger';
+      if(qty<=level) return 'warning';
+      return 'success';
+    },
+    stockLabel(stock,reorder) {
+      const qty=Number(stock||0);
+      const level=Number(reorder||0);
+      if(qty<=0) return 'Out of stock';
+      if(qty<=level) return 'Low stock';
+      return 'In stock';
+    },
     json(value) { return JSON.stringify(value); },
     eq(a,b) { return a === b; }
   }

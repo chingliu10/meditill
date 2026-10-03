@@ -1,9 +1,9 @@
-async function list(db,organizationId,q=''){
+async function list(db,organizationId,q='',branchId=null){
   const term=`%${q.trim()}%`;
   const {rows}=await db.query(
     `SELECT
       m.id,m.name,m.generic_name,m.brand_name,m.strength,m.dosage_form,m.sku,
-      m.default_selling_price,
+      m.default_selling_price,m.reorder_level,m.image_path,
       c.name category,
       u.name unit_name,
       u.symbol unit,
@@ -11,7 +11,16 @@ async function list(db,organizationId,q=''){
       (SELECT barcode FROM medicine_barcodes mb
        WHERE mb.medicine_id=m.id
        ORDER BY is_primary DESC,id
-       LIMIT 1) barcode
+       LIMIT 1) barcode,
+      CASE WHEN $4::bigint IS NULL THEN NULL ELSE COALESCE((
+        SELECT SUM(b.quantity_available)
+        FROM medicine_batches b
+        WHERE b.medicine_id=m.id
+          AND b.branch_id=$4
+          AND b.status='SALEABLE'
+          AND b.quantity_available>0
+          AND (b.expiry_date IS NULL OR b.expiry_date>=current_date)
+      ),0) END saleable_stock
      FROM medicines m
      LEFT JOIN categories c ON c.id=m.category_id
      LEFT JOIN units u ON u.id=m.base_unit_id
@@ -32,7 +41,7 @@ async function list(db,organizationId,q=''){
        )
      ORDER BY m.name
      LIMIT 100`,
-    [organizationId,q.trim(),term]
+    [organizationId,q.trim(),term,branchId]
   );
   return rows;
 }
@@ -77,7 +86,7 @@ async function create(db,data){
 async function byBarcode(db,organizationId,branchId,barcode){
   const {rows}=await db.query(
     `SELECT
-      m.id,m.name,m.generic_name,m.brand_name,m.strength,m.default_selling_price,
+      m.id,m.name,m.generic_name,m.brand_name,m.strength,m.default_selling_price,m.image_path,
       u.name unit_name,u.symbol unit,COALESCE(u.allow_fraction,false) allow_fraction,
       COALESCE(sum(b.quantity_available) FILTER(
         WHERE b.status='SALEABLE'

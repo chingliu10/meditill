@@ -1,9 +1,152 @@
-<div class="d-flex justify-content-between align-items-center mb-4"><div><h2 class="mb-0">Dashboard</h2><div class="text-muted">Today at {{currentBranch.name}}</div></div>
-<form action="/branches/switch" method="post" class="d-flex gap-2"><select name="branch_id" class="form-select">{{#each branches}}<option value="{{id}}">{{name}}</option>{{/each}}</select><button class="btn btn-outline-secondary">Switch</button></form></div>
-<div class="row g-3">
-<div class="col-sm-6 col-xl-3"><div class="card p-3"><div class="text-muted">Sales today</div><h3>TZS {{money data.sales_today}}</h3></div></div>
-<div class="col-sm-6 col-xl-3"><div class="card p-3"><div class="text-muted">Transactions</div><h3>{{data.transactions_today}}</h3></div></div>
-<div class="col-sm-6 col-xl-3"><div class="card p-3"><div class="text-muted">Low stock</div><h3>{{data.low_stock}}</h3></div></div>
-<div class="col-sm-6 col-xl-3"><div class="card p-3"><div class="text-muted">Expiring ≤30d</div><h3>{{data.expiring_30}}</h3></div></div>
-</div>
-<div class="mt-4"><a href="/pos" class="btn btn-primary btn-lg">Open POS</a></div>
+<section class="mt-page">
+  <div class="mt-page-header">
+    <div>
+      <p class="mt-eyebrow">BUSINESS OVERVIEW</p>
+      <h1>Welcome, {{user.name}}</h1>
+      <p>Monitor sales, profit, inventory health and recent activity at {{currentBranch.name}}.</p>
+    </div>
+    <a href="/pos" class="mt-btn mt-btn-primary mt-btn-lg">Start selling</a>
+  </div>
+
+  <div class="mt-metric-grid">
+    <article class="mt-metric-card">
+      <div class="mt-metric-icon mt-metric-icon-green">↗</div>
+      <div>
+        <span>Sales today</span>
+        <strong>TZS {{money data.sales_today}}</strong>
+        <small>{{data.transactions_today}} transactions</small>
+      </div>
+    </article>
+
+    <article class="mt-metric-card">
+      <div class="mt-metric-icon mt-metric-icon-blue">+</div>
+      <div>
+        <span>Gross profit today</span>
+        <strong>TZS {{money data.gross_profit_today}}</strong>
+        <small>Based on actual batch cost</small>
+      </div>
+    </article>
+
+    <article class="mt-metric-card">
+      <div class="mt-metric-icon mt-metric-icon-amber">↓</div>
+      <div>
+        <span>Purchases today</span>
+        <strong>TZS {{money data.purchases_today}}</strong>
+        <small>Received stock value</small>
+      </div>
+    </article>
+
+    <article class="mt-metric-card">
+      <div class="mt-metric-icon mt-metric-icon-purple">#</div>
+      <div>
+        <span>Transactions</span>
+        <strong>{{data.transactions_today}}</strong>
+        <small>Completed today</small>
+      </div>
+    </article>
+  </div>
+
+  <div class="mt-alert-grid">
+    <a href="/inventory" class="mt-alert-card mt-alert-warning">
+      <span class="mt-alert-count">{{data.low_stock}}</span>
+      <span><strong>Low stock</strong><small>At or below reorder level</small></span>
+      <b>→</b>
+    </a>
+    <a href="/inventory" class="mt-alert-card mt-alert-danger">
+      <span class="mt-alert-count">{{data.out_of_stock}}</span>
+      <span><strong>Out of stock</strong><small>No saleable quantity</small></span>
+      <b>→</b>
+    </a>
+    <a href="/inventory/api/expiring?days=30" class="mt-alert-card mt-alert-info">
+      <span class="mt-alert-count">{{data.expiring_30}}</span>
+      <span><strong>Expiring ≤30 days</strong><small>Needs attention soon</small></span>
+      <b>→</b>
+    </a>
+    <a href="/inventory" class="mt-alert-card mt-alert-danger-soft">
+      <span class="mt-alert-count">{{data.expired_batches}}</span>
+      <span><strong>Expired batches</strong><small>Remove from saleable stock</small></span>
+      <b>→</b>
+    </a>
+  </div>
+
+  <div class="mt-dashboard-grid">
+    <article class="mt-panel">
+      <div class="mt-panel-header">
+        <div>
+          <h2>Top selling medicines</h2>
+          <p>Last 30 days</p>
+        </div>
+        <a href="/reports/sales">View report</a>
+      </div>
+      <div class="mt-list">
+        {{#each topSelling}}
+        <div class="mt-product-row">
+          <img src="{{#if image_path}}{{image_path}}{{else}}/images/default-medicine.svg{{/if}}" alt="">
+          <div class="mt-product-row-main">
+            <strong>{{name}} {{strength}}</strong>
+            <small>TZS {{money revenue}} revenue</small>
+          </div>
+          <span class="mt-pill mt-pill-success">Sold {{quantity quantity_sold}}</span>
+        </div>
+        {{else}}
+        <div class="mt-empty-state">Sales will appear here after transactions are completed.</div>
+        {{/each}}
+      </div>
+    </article>
+
+    <article class="mt-panel">
+      <div class="mt-panel-header">
+        <div>
+          <h2>Expiry risk</h2>
+          <p>Next 90 days and expired</p>
+        </div>
+        <a href="/inventory">Inventory</a>
+      </div>
+      <div class="mt-list">
+        {{#each expiryRisk}}
+        <div class="mt-risk-row">
+          <div>
+            <strong>{{name}} {{strength}}</strong>
+            <small>Batch {{batch_number}} · {{date expiry_date}}</small>
+          </div>
+          <div class="mt-risk-values">
+            <span>{{quantity quantity_available}} left</span>
+            <strong>TZS {{money value_at_risk}}</strong>
+          </div>
+        </div>
+        {{else}}
+        <div class="mt-empty-state">No near-expiry batches found.</div>
+        {{/each}}
+      </div>
+    </article>
+  </div>
+
+  <article class="mt-panel">
+    <div class="mt-panel-header">
+      <div>
+        <h2>Recent sales</h2>
+        <p>Latest completed transactions</p>
+      </div>
+      <a href="/reports/sales">All sales</a>
+    </div>
+    <div class="mt-table-wrap">
+      <table class="mt-table">
+        <thead>
+          <tr><th>Sale</th><th>Date</th><th>Cashier</th><th class="mt-text-right">Amount</th></tr>
+        </thead>
+        <tbody>
+          {{#each recentSales}}
+          <tr>
+            <td><strong>{{sale_number}}</strong></td>
+            <td>{{dateTime created_at}}</td>
+            <td>{{cashier}}</td>
+            <td class="mt-text-right"><strong>TZS {{money total}}</strong></td>
+          </tr>
+          {{else}}
+          <tr><td colspan="4"><div class="mt-empty-state">No sales yet.</div></td></tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>

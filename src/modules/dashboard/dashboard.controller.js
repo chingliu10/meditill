@@ -1,7 +1,25 @@
 const {pool}=require('../../config/db');
 const repo=require('./dashboard.repository');
-async function index(req,res,next){try{
-  const data=await repo.metrics(pool,req.session.user.organization_id,req.branch.id);
-  res.render('dashboard/index',{title:'Dashboard',data,branches:req.session.branches});
-}catch(e){next(e);}}
+
+async function index(req,res,next){
+  try{
+    const [data,topSelling,expiryRisk,recentSales]=await Promise.all([
+      repo.metrics(pool,req.session.user.organization_id,req.branch.id),
+      repo.topSelling(pool,req.branch.id),
+      repo.expiryRisk(pool,req.branch.id),
+      repo.recentSales(pool,req.branch.id)
+    ]);
+
+    res.render('dashboard/index',{
+      title:'Dashboard',
+      data,
+      topSelling,
+      expiryRisk,
+      recentSales
+    });
+  }catch(error){
+    next(error);
+  }
+}
+
 module.exports={index};

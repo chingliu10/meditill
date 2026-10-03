@@ -7,6 +7,7 @@ function requireAuth(req,res,next) {
 function exposeUser(req,res,next) {
   res.locals.user = req.session.user || null;
   res.locals.currentBranch = req.session.currentBranch || null;
+  res.locals.branches = req.session.branches || [];
   next();
 }
 
