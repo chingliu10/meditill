@@ -32,7 +32,7 @@ async function salesSummary(db,branchId,from,to){
 async function daily(db,branchId,from,to){
   const {rows}=await db.query(
     `SELECT
-      s.created_at::date AS day,
+      s.created_at::date AS sale_date,
       COUNT(*)::int AS transactions,
       COALESCE(SUM(s.total),0) AS revenue
      FROM sales s
@@ -41,7 +41,7 @@ async function daily(db,branchId,from,to){
        AND s.created_at >= $2::date
        AND s.created_at < ($3::date + interval '1 day')
      GROUP BY s.created_at::date
-     ORDER BY day DESC`,
+     ORDER BY sale_date DESC`,
     [branchId,from,to]
   );
   return rows;
