@@ -19,6 +19,25 @@ async function create(req,res,next){
   }
 }
 async function show(req,res,next){try{const d=await repo.detail(pool,req.session.user.organization_id,req.branch.id,Number(req.params.id));if(!d)throw appError('Purchase not found',404);const paid=d.payments.reduce((s,p)=>s+Number(p.amount),0),returned=d.returns.reduce((s,r)=>s+Number(r.total_value),0),netTotal=Math.max(0,Number(d.purchase.total)-returned);res.render('purchases/show',{title:d.purchase.purchase_number,...d,paid,returned,netTotal,balance:Math.max(0,netTotal-paid)});}catch(e){next(e);}}
-async function payment(req,res,next){try{await service.addPayment(Number(req.params.id),req.body,{user:req.session.user,branch:req.branch});setFlash(req,'success','Supplier payment recorded.');res.redirect('/purchases/'+req.params.id);}catch(e){next(e);}}
+async function payment(req,res,next){
+  try{
+    await service.addPayment(Number(req.params.id),req.body,{user:req.session.user,branch:req.branch});
+    setFlash(req,'success','Supplier payment recorded.');
+    res.redirect('/purchases/'+req.params.id);
+  }catch(error){
+    console.error('[PURCHASE] Payment failed',{
+      organizationId:req.session.user?.organization_id,
+      branchId:req.branch?.id,
+      purchaseId:req.params.id,
+      amount:req.body?.amount,
+      paymentMethod:req.body?.payment_method,
+      code:error.code,
+      constraint:error.constraint,
+      detail:error.detail,
+      message:error.message
+    });
+    next(error);
+  }
+}
 async function returnPurchase(req,res,next){try{const r=await service.createReturn(Number(req.params.id),req.body,{user:req.session.user,branch:req.branch});setFlash(req,'success',`Purchase return ${r.return_number} posted.`);res.redirect('/purchases/'+req.params.id);}catch(e){next(e);}}
 module.exports={index,newForm,create,show,payment,returnPurchase};
