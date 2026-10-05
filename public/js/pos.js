@@ -6,5 +6,57 @@ async function search(q){const r=await fetch('/pos/api/search?q='+encodeURICompo
 input?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const q=input.value.trim();if(q)scan(q).catch(x=>notify(x.message,'error'))}});input?.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>search(input.value).catch(x=>notify(x.message,'error')),220)});
 document.querySelectorAll('[data-method]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-method]').forEach(x=>x.classList.toggle('is-active',x===b));document.querySelector('#paymentMethod').value=b.dataset.method});
 customerSearch?.addEventListener('input',()=>{customerId.value='';clearTimeout(customerTimer);customerTimer=setTimeout(async()=>{const r=await fetch('/customers/api/search?q='+encodeURIComponent(customerSearch.value));const list=await r.json();customerResults.innerHTML='';list.slice(0,12).forEach(c=>{const b=document.createElement('button');b.type='button';b.className='mt-picker-item';b.innerHTML=`<span class="mt-picker-title">${esc(c.name)}</span><span class="mt-picker-meta">${esc(c.phone||'')}</span>`;b.onclick=()=>{customerId.value=c.id;customerSearch.value=c.name;customerResults.classList.remove('is-open')};customerResults.appendChild(b)});customerResults.classList.add('is-open')},200)});
-document.querySelector('#completeSale')?.addEventListener('click',async()=>{if(!cart.size)return notify('Cart is empty','warning');const body={customer_id:customerId.value||null,items:[...cart.values()].map(i=>({medicine_id:i.id,medicine_unit_id:i.medicineUnitId,sale_unit_quantity:i.saleQty,unit_price:i.salePrice})),payments:[{method:document.querySelector('#paymentMethod').value,amount:Number(payAmount.value)}]};const r=await fetch('/pos/api/sales',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)return notify(d.error||'Sale failed','error');document.querySelector('#saleSuccessNumber').textContent=d.sale_number;document.querySelector('#saleSuccessChange').textContent='Change: '+money(d.change_amount);document.querySelector('#saleReceiptLink').href='/sales/'+d.id+'/receipt';document.querySelector('#saleSuccess').hidden=false;cart.clear();renderCart();search('')});
+let saleInFlight=false;
+document.querySelector('#completeSale')?.addEventListener('click',async()=>{
+  if(saleInFlight)return;
+  if(!cart.size)return notify('Cart is empty','warning');
+
+  const button=document.querySelector('#completeSale');
+  const originalText=button.textContent;
+  saleInFlight=true;
+  button.disabled=true;
+  button.textContent='Processing...';
+
+  try{
+    const body={
+      customer_id:customerId.value||null,
+      items:[...cart.values()].map(i=>({
+        medicine_id:i.id,
+        medicine_unit_id:i.medicineUnitId,
+        sale_unit_quantity:i.saleQty,
+        unit_price:i.salePrice
+      })),
+      payments:[{
+        method:document.querySelector('#paymentMethod').value,
+        amount:Number(payAmount.value)
+      }]
+    };
+
+    const r=await fetch('/pos/api/sales',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    const d=await r.json();
+
+    if(!r.ok){
+      notify(d.error||'Sale failed','error');
+      return;
+    }
+
+    document.querySelector('#saleSuccessNumber').textContent=d.sale_number;
+    document.querySelector('#saleSuccessChange').textContent='Change: '+money(d.change_amount);
+    document.querySelector('#saleReceiptLink').href='/sales/'+d.id+'/receipt';
+    document.querySelector('#saleSuccess').hidden=false;
+    cart.clear();
+    renderCart();
+    search('');
+  }catch(error){
+    notify(error.message||'Sale failed','error');
+  }finally{
+    saleInFlight=false;
+    button.disabled=false;
+    button.textContent=originalText;
+  }
+});
 document.querySelector('#saleDone')?.addEventListener('click',()=>{document.querySelector('#saleSuccess').hidden=true;customerId.value='';customerSearch.value='';input.focus()});document.addEventListener('click',e=>{if(!customerSearch?.parentElement.contains(e.target))customerResults?.classList.remove('is-open')});renderCart();search('').catch(x=>notify(x.message,'error'));})();
