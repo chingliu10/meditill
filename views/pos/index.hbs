@@ -1,20 +1,90 @@
-<section class="mt-pos">
-<div class="mt-pos-top"><div><p class="mt-eyebrow">POINT OF SALE</p><h1>{{currentBranch.name}}</h1></div><div class="mt-pos-session">{{#if register}}<span class="mt-status mt-status-success">● {{register.register_name}} open</span>{{else}}<a href="/registers" class="mt-btn mt-btn-warning">Open register</a>{{/if}}</div></div>
-<div class="mt-pos-grid">
-  <section class="mt-pos-catalog">
-    <div class="mt-pos-search-row"><div class="mt-pos-search"><span>⌕</span><input id="scanInput" autocomplete="off" placeholder="Scan barcode or search medicine" autofocus></div></div>
-    <div id="products" class="mt-product-grid"></div>
-  </section>
-  <aside class="mt-pos-cart">
-    <div class="mt-customer-picker"><label>Customer</label><input type="hidden" id="customerId"><input id="customerSearch" autocomplete="off" placeholder="Walk-in Customer"><div id="customerResults" class="mt-picker-menu"></div></div>
-    <div class="mt-cart-heading"><h2>Cart</h2><span id="cartCount">0 items</span></div>
-    <div id="cartLines" class="mt-cart-lines"><div class="mt-empty-state">Scan or tap a medicine to begin.</div></div>
-    <div class="mt-cart-summary"><div><span>Subtotal</span><strong id="subtotal">TZS 0</strong></div><div class="mt-grand-total"><span>Total</span><strong id="total">TZS 0</strong></div></div>
-    <div class="mt-payment-box"><label>Payment method</label><div class="mt-payment-methods"><button data-method="CASH" class="is-active">Cash</button><button data-method="MOBILE_MONEY">Mobile</button><button data-method="CARD">Card</button><button data-method="BANK">Bank</button></div><input type="hidden" id="paymentMethod" value="CASH"><label>Amount received</label><input id="paymentAmount" type="number" min="0" step="0.01"></div>
-    <button id="completeSale" class="mt-btn mt-btn-primary mt-complete-sale" {{#unless register}}disabled{{/unless}}>Complete sale</button>
-  </aside>
-</div>
-<div class="mt-pos-recent"><div class="mt-panel-header"><div><h2>Recent transactions</h2><p>Quick receipt access</p></div><a href="/sales">View all</a></div><div class="mt-recent-sales">{{#each recent}}<a href="/sales/{{id}}" class="mt-recent-sale"><span><strong>{{sale_number}}</strong><small>{{#if customer}}{{customer}}{{else}}Walk-in{{/if}} · {{dateTime created_at}}</small></span><b>TZS {{money total}}</b></a>{{else}}<div class="mt-empty-state">No sales yet.</div>{{/each}}</div></div>
+<section class="mt-pos mt-pos-fullscreen">
+  <div class="mt-pos-grid">
+    <section class="mt-pos-catalog">
+      <div class="mt-pos-search-row">
+        <div class="mt-pos-search">
+          <span>⌕</span>
+          <input id="scanInput" autocomplete="off" placeholder="Scan barcode or search medicine" autofocus>
+        </div>
+      </div>
+      <div id="products" class="mt-product-grid"></div>
+    </section>
+
+    <aside class="mt-pos-cart">
+      <div class="mt-customer-picker">
+        <label>Customer</label>
+        <input type="hidden" id="customerId">
+        <input id="customerSearch" autocomplete="off" placeholder="Walk-in Customer">
+        <div id="customerResults" class="mt-picker-menu"></div>
+      </div>
+
+      <div class="mt-cart-heading">
+        <h2>Cart</h2>
+        <span id="cartCount">0 items</span>
+      </div>
+
+      <div id="cartLines" class="mt-cart-lines">
+        <div class="mt-empty-state">Scan or tap a medicine to begin.</div>
+      </div>
+
+      <div class="mt-cart-summary">
+        <div><span>Subtotal</span><strong id="subtotal">TZS 0</strong></div>
+        <div class="mt-grand-total"><span>Total</span><strong id="total">TZS 0</strong></div>
+      </div>
+
+      <div class="mt-payment-box">
+        <label>Payment method</label>
+        <div class="mt-payment-methods">
+          <button type="button" data-method="CASH" class="is-active">Cash</button>
+          <button type="button" data-method="MOBILE_MONEY">Mobile</button>
+          <button type="button" data-method="CARD">Card</button>
+          <button type="button" data-method="BANK">Bank</button>
+        </div>
+        <input type="hidden" id="paymentMethod" value="CASH">
+
+        <label>Amount received</label>
+        <input id="paymentAmount" type="number" min="0" step="0.01">
+
+        <div class="mt-pos-change-preview">
+          <span>Change</span>
+          <strong id="changePreview">TZS 0</strong>
+        </div>
+      </div>
+
+      <button id="completeSale" class="mt-btn mt-btn-primary mt-complete-sale">Complete sale</button>
+    </aside>
+  </div>
 </section>
-<div class="mt-sale-success" id="saleSuccess" hidden><div class="mt-sale-success-card"><div class="mt-success-check">✓</div><h2>Sale completed</h2><p id="saleSuccessNumber"></p><strong id="saleSuccessChange"></strong><div class="mt-modal-actions"><a id="saleReceiptLink" target="_blank" class="mt-btn mt-btn-secondary">Print receipt</a><button id="saleDone" class="mt-btn mt-btn-primary">New sale</button></div></div></div>
+
+<div class="mt-sale-success" id="saleSuccess" hidden>
+  <div class="mt-sale-success-card">
+    <button type="button" id="saleSuccessClose" class="mt-sale-success-close" aria-label="Close">×</button>
+    <div class="mt-success-check">✓</div>
+    <h2>Sale completed</h2>
+    <p id="saleSuccessNumber"></p>
+    <strong id="saleSuccessChange"></strong>
+    <div class="mt-modal-actions">
+      <a id="saleReceiptLink" target="_blank" class="mt-btn mt-btn-secondary">Print receipt</a>
+      <button id="saleDone" class="mt-btn mt-btn-primary">New sale</button>
+    </div>
+  </div>
+</div>
+
+<div class="mt-modal-backdrop" id="posRegisterCloseModal" hidden>
+  <div class="mt-modal">
+    <div class="mt-modal-icon">▣</div>
+    <h3>Close register?</h3>
+    <p>Count the physical cash in the drawer. Closing the register ends this cashier session.</p>
+    <form id="posRegisterCloseForm" class="mt-form-stack">
+      <label>Actual cash counted
+        <input type="number" min="0" step="0.01" name="actual_cash" required autofocus>
+      </label>
+      <div class="mt-modal-actions">
+        <button type="button" class="mt-btn mt-btn-secondary" id="posRegisterCloseCancel">Cancel</button>
+        <button type="submit" class="mt-btn mt-btn-danger">Close register</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script src="/js/pos.js"></script>
