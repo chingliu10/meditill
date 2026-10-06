@@ -11,19 +11,19 @@
   <div class="mt-sales-filterbar">
     <div class="mt-period-strip" aria-label="Sales period">
       {{#each periods}}
-        <a href="{{url}}" class="mt-period-chip {{#if active}}is-active{{/if}}">{{label}}</a>
+        <a href="{{url}}" class="mt-period-chip {{#if active}}is-active{{/if}}" data-ajax-target="sales">{{label}}</a>
       {{/each}}
     </div>
 
-    <form class="mt-sales-search" method="get" data-debounce-search="350">
+    <form class="mt-sales-search" method="get" data-debounce-search="350" data-ajax-filter data-ajax-target="sales">
       <input type="hidden" name="period" value="{{period}}">
       <input name="q" value="{{q}}" placeholder="Search sale number or customer">
-      {{#if q}}<a href="/sales?period={{period}}" class="mt-search-clear" aria-label="Clear search">×</a>{{/if}}
+      {{#if q}}<a href="/sales?period={{period}}" class="mt-search-clear" data-ajax-target="sales" aria-label="Clear search">×</a>{{/if}}
       <button class="mt-btn mt-btn-primary">Search</button>
     </form>
   </div>
 
-  <article class="mt-panel mt-panel-flush">
+  <article class="mt-panel mt-panel-flush" data-ajax-results="sales">
     <div class="mt-table-wrap">
       <table class="mt-table">
         <thead>
