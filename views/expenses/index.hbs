@@ -7,7 +7,7 @@
     <div class="mt-period-strip" aria-label="Expense period">
       {{#each periods}}<a href="{{url}}" class="mt-period-chip {{#if active}}is-active{{/if}}">{{label}}</a>{{/each}}
     </div>
-    <form class="mt-sales-search mt-expense-filter" method="get">
+    <form class="mt-sales-search mt-expense-filter" method="get" data-debounce-search="350">
       <input type="hidden" name="period" value="{{period}}">
       <input name="q" value="{{q}}" placeholder="Search category or description">
       <select name="method">
