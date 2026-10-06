@@ -10,7 +10,7 @@
   <div class="mt-page-header"><div><p class="mt-eyebrow">REPORTS</p><h1>Inventory valuation</h1></div></div>
 
   <div class="mt-toolbar">
-    <form class="mt-search-form" method="get">
+    <form class="mt-search-form" method="get" data-debounce-search="350">
       <span class="mt-search-icon">⌕</span>
       <input name="q" value="{{q}}" placeholder="Search medicine, generic or strength">
       {{#if q}}<a href="/reports/inventory" class="mt-search-clear">×</a>{{/if}}
