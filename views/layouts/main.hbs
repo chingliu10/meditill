@@ -63,7 +63,7 @@
   <div class="mt-topbar-actions">
     <button type="button" id="installApp" class="mt-install-app" hidden>Install app</button>
     {{#if (can user "sale.create")}}<a href="/pos" class="mt-topbar-pos">Open POS</a>{{/if}}
-    <div class="mt-user-chip"><span class="mt-user-avatar">A</span><span class="mt-user-meta"><strong>{{user.name}}</strong><small>{{currentBranch.name}}</small></span></div>
+    <a href="/profile" class="mt-user-chip mt-user-chip-link" title="Edit my profile"><span class="mt-user-avatar">A</span><span class="mt-user-meta"><strong>{{user.name}}</strong><small>{{currentBranch.name}}</small></span></a>
     <a href="/logout" class="mt-topbar-logout">Logout</a>
   </div>
 </header>
