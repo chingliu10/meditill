@@ -12,7 +12,7 @@
 
   <div data-tab-panel="stock">
     <div class="mt-toolbar">
-      <form class="mt-sales-search mt-expense-filter" method="get">
+      <form class="mt-sales-search mt-expense-filter" method="get" data-debounce-search="350">
         <input type="hidden" name="tab" value="stock">
         <input name="stock_q" value="{{stockQ}}" placeholder="Search medicine, generic or strength">
         <select name="stock_status">
@@ -55,7 +55,7 @@
 
   <div data-tab-panel="batches" hidden>
     <div class="mt-toolbar">
-      <form class="mt-sales-search mt-expense-filter" method="get">
+      <form class="mt-sales-search mt-expense-filter" method="get" data-debounce-search="350">
         <input type="hidden" name="tab" value="batches">
         <input name="batch_q" value="{{batchQ}}" placeholder="Search medicine or batch">
         <select name="batch_status">
