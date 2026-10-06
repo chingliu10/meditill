@@ -54,7 +54,7 @@
     {{#if (can user "roles.manage")}}<a class="mt-nav-link" data-nav href="/roles"><span class="mt-nav-icon">⚿</span><span>Roles</span></a>{{/if}}
     {{#if (can user "settings.manage")}}<a class="mt-nav-link" data-nav href="/settings"><span class="mt-nav-icon">⚙</span><span>Settings</span></a>{{/if}}
   </nav>
-  <div class="mt-sidebar-footer"><div class="mt-sidebar-user"><span class="mt-avatar">●</span><div><strong>{{user.name}}</strong><small>{{currentBranch.name}}</small></div></div></div>
+  <div class="mt-sidebar-footer"><a href="/profile" class="mt-sidebar-user mt-sidebar-user-link" title="Edit my profile"><span class="mt-avatar">●</span><div><strong>{{user.name}}</strong><small>{{currentBranch.name}}</small></div></a></div>
 </aside>
 <div class="mt-sidebar-backdrop" id="sidebarBackdrop"></div>
 <div class="mt-workspace">
