@@ -35,8 +35,31 @@ async function list(db,organizationId,q='',branchId=null,page=1,pageSize=25){
 }
 
 async function search(db,organizationId,q='',branchId=null,limit=60){
-  const result=await list(db,organizationId,q,branchId,1,Math.min(100,Math.max(1,Number(limit)||60)));
-  return result.rows;
+  const query=String(q||'').trim();
+  const term=`%${query}%`;
+  const safeLimit=Math.min(100,Math.max(1,Number(limit)||60));
+  const {rows}=await db.query(
+    `SELECT m.id,m.name,m.generic_name,m.brand_name,m.strength,m.dosage_form,m.sku,m.default_selling_price,m.reorder_level,m.image_path,
+       c.name category,u.name unit_name,u.symbol unit,COALESCE(u.allow_fraction,false) allow_fraction,
+       (SELECT barcode FROM medicine_barcodes mb WHERE mb.medicine_id=m.id ORDER BY is_primary DESC,id LIMIT 1) barcode,
+       CASE WHEN $4::bigint IS NULL THEN NULL ELSE COALESCE((
+         SELECT SUM(b.quantity_available)
+         FROM medicine_batches b
+         WHERE b.medicine_id=m.id AND b.branch_id=$4 AND b.status='SALEABLE'
+           AND b.quantity_available>0 AND (b.expiry_date IS NULL OR b.expiry_date>=current_date)
+       ),0) END saleable_stock
+     FROM medicines m
+     LEFT JOIN categories c ON c.id=m.category_id
+     LEFT JOIN units u ON u.id=m.base_unit_id
+     WHERE m.organization_id=$1 AND m.active=true
+       AND ($2='' OR m.name ILIKE $3 OR COALESCE(m.generic_name,'') ILIKE $3 OR COALESCE(m.brand_name,'') ILIKE $3 OR COALESCE(m.sku,'') ILIKE $3
+         OR EXISTS(SELECT 1 FROM medicine_barcodes mb WHERE mb.medicine_id=m.id AND mb.barcode ILIKE $3)
+         OR EXISTS(SELECT 1 FROM medicine_units mu WHERE mu.medicine_id=m.id AND mu.active=true AND mu.barcode ILIKE $3))
+     ORDER BY m.name
+     LIMIT $5`,
+    [organizationId,query,term,branchId,safeLimit]
+  );
+  return rows;
 }
 
 async function masters(db,organizationId){const [categories,units,manufacturers]=await Promise.all([db.query('SELECT id,name FROM categories WHERE organization_id=$1 AND active=true ORDER BY name',[organizationId]),db.query('SELECT id,name,symbol,allow_fraction FROM units WHERE organization_id=$1 AND active=true ORDER BY name',[organizationId]),db.query('SELECT id,name FROM manufacturers WHERE organization_id=$1 AND active=true ORDER BY name',[organizationId])]);return {categories:categories.rows,units:units.rows,manufacturers:manufacturers.rows};}
