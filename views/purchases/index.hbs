@@ -6,17 +6,17 @@
 
   <div class="mt-sales-filterbar">
     <div class="mt-period-strip" aria-label="Purchase period">
-      {{#each periods}}<a href="{{url}}" class="mt-period-chip {{#if active}}is-active{{/if}}">{{label}}</a>{{/each}}
+      {{#each periods}}<a href="{{url}}" class="mt-period-chip {{#if active}}is-active{{/if}}" data-ajax-target="purchases">{{label}}</a>{{/each}}
     </div>
-    <form class="mt-sales-search" method="get" data-debounce-search="350">
+    <form class="mt-sales-search" method="get" data-debounce-search="350" data-ajax-filter data-ajax-target="purchases">
       <input type="hidden" name="period" value="{{period}}">
       <input name="q" value="{{q}}" placeholder="Search purchase, invoice or supplier">
-      {{#if q}}<a href="/purchases?period={{period}}" class="mt-search-clear" aria-label="Clear search">×</a>{{/if}}
+      {{#if q}}<a href="/purchases?period={{period}}" class="mt-search-clear" data-ajax-target="purchases" aria-label="Clear search">×</a>{{/if}}
       <button class="mt-btn mt-btn-primary">Search</button>
     </form>
   </div>
 
-  <article class="mt-panel mt-panel-flush">
+  <article class="mt-panel mt-panel-flush" data-ajax-results="purchases">
     <div class="mt-table-wrap">
       <table class="mt-table">
         <thead><tr><th>Purchase</th><th>Date</th><th>Supplier</th><th>Total</th><th>Payment</th><th>Status</th><th></th></tr></thead>
