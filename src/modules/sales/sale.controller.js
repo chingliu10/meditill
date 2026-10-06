@@ -92,7 +92,7 @@ async function index(req,res,next){
       periods:PERIODS.map(item=>({
         ...item,
         active:item.key===period.key,
-        url:makeUrl({period:item.key,q:'',page:1})
+        url:makeUrl({period:item.key,q,page:1})
       })),
       pagination:{
         page,
