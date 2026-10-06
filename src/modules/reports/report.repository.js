@@ -104,35 +104,41 @@ async function expiry(db,branchId){
 async function profitLoss(db,branchId,startDate,endDate,timezone='Africa/Dar_es_Salaam'){
   const {rows}=await db.query(
     `WITH filtered_sales AS (
-      SELECT s.id,s.total,
-        COALESCE((SELECT SUM(sr.total_refund) FROM sale_returns sr WHERE sr.sale_id=s.id),0) refunds
+      SELECT s.id,s.total
       FROM sales s
       WHERE s.branch_id=$1
         AND s.status IN('COMPLETED','PARTIALLY_REFUNDED','REFUNDED')
         AND s.created_at >= ($2::date::timestamp AT TIME ZONE $4)
         AND s.created_at < ($3::date::timestamp AT TIME ZONE $4)
     ),
+    refunds AS (
+      SELECT sr.sale_id,SUM(sr.total_refund) refunds
+      FROM sale_returns sr
+      JOIN filtered_sales fs ON fs.id=sr.sale_id
+      GROUP BY sr.sale_id
+    ),
     costs AS (
       SELECT si.sale_id,SUM(sib.quantity*sib.unit_cost) cost
       FROM sale_items si
-      JOIN sale_item_batches sib ON sib.sale_item_id=si.id
       JOIN filtered_sales fs ON fs.id=si.sale_id
+      JOIN sale_item_batches sib ON sib.sale_item_id=si.id
       GROUP BY si.sale_id
     ),
     returned_cost AS (
       SELECT sr.sale_id,SUM(sri.quantity*mb.unit_cost) cost
       FROM sale_returns sr
+      JOIN filtered_sales fs ON fs.id=sr.sale_id
       JOIN sale_return_items sri ON sri.sale_return_id=sr.id
       JOIN medicine_batches mb ON mb.id=sri.batch_id
-      JOIN filtered_sales fs ON fs.id=sr.sale_id
       GROUP BY sr.sale_id
     ),
     sales_totals AS (
       SELECT
         COUNT(fs.id)::int transactions,
-        COALESCE(SUM(fs.total-fs.refunds),0)::numeric revenue,
+        COALESCE(SUM(fs.total-COALESCE(r.refunds,0)),0)::numeric revenue,
         COALESCE(SUM(COALESCE(c.cost,0)-COALESCE(rc.cost,0)),0)::numeric cost
       FROM filtered_sales fs
+      LEFT JOIN refunds r ON r.sale_id=fs.id
       LEFT JOIN costs c ON c.sale_id=fs.id
       LEFT JOIN returned_cost rc ON rc.sale_id=fs.id
     ),
