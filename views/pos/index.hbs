@@ -10,17 +10,20 @@
       <div id="products" class="mt-product-grid"></div>
     </section>
 
-    <aside class="mt-pos-cart">
+    <aside class="mt-pos-cart" id="posCart">
+      <div class="mt-cart-heading">
+        <div>
+          <h2>Cart</h2>
+          <span id="cartCount">0 items</span>
+        </div>
+        <button type="button" id="mobileCartClose" class="mt-mobile-cart-close" aria-label="Close cart">×</button>
+      </div>
+
       <div class="mt-customer-picker">
         <label>Customer</label>
         <input type="hidden" id="customerId">
         <input id="customerSearch" autocomplete="off" placeholder="Walk-in Customer">
         <div id="customerResults" class="mt-picker-menu"></div>
-      </div>
-
-      <div class="mt-cart-heading">
-        <h2>Cart</h2>
-        <span id="cartCount">0 items</span>
       </div>
 
       <div id="cartLines" class="mt-cart-lines">
@@ -56,6 +59,18 @@
   </div>
 </section>
 
+<div id="mobileCartBackdrop" class="mt-mobile-cart-backdrop" hidden></div>
+
+<button type="button" id="mobileCartBar" class="mt-mobile-cart-bar" aria-label="Review cart">
+  <span class="mt-mobile-cart-icon">🛒</span>
+  <span class="mt-mobile-cart-copy">
+    <strong id="mobileCartCount">0 items</strong>
+    <small>Review cart</small>
+  </span>
+  <strong id="mobileCartTotal">TZS 0</strong>
+  <span class="mt-mobile-cart-arrow">›</span>
+</button>
+
 <div class="mt-sale-success" id="saleSuccess" hidden>
   <div class="mt-sale-success-card">
     <button type="button" id="saleSuccessClose" class="mt-sale-success-close" aria-label="Close">×</button>
@@ -87,4 +102,4 @@
   </div>
 </div>
 
-<script src="/js/pos.js?v=20261006-2"></script>
+<script src="/js/pos.js?v=20261006-3"></script>
