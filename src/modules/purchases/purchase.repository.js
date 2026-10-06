@@ -1,4 +1,39 @@
-async function list(db,organizationId,branchId){const {rows}=await db.query(`SELECT p.id,p.purchase_number,p.purchase_date,p.total,p.status,p.payment_status,s.name supplier FROM purchases p LEFT JOIN suppliers s ON s.id=p.supplier_id WHERE p.organization_id=$1 AND p.branch_id=$2 ORDER BY p.purchase_date DESC LIMIT 100`,[organizationId,branchId]);return rows;}
+async function list(db,organizationId,branchId,filters={}){
+  const q=String(filters.q||'').trim();
+  const term=`%${q}%`;
+  const startDate=filters.startDate;
+  const endDate=filters.endDate;
+  const page=Math.max(1,Number(filters.page)||1);
+  const pageSize=Math.min(100,Math.max(1,Number(filters.pageSize)||25));
+  const offset=(page-1)*pageSize;
+  const params=[organizationId,branchId,q,term,startDate,endDate];
+
+  const total=Number((await db.query(
+    `SELECT COUNT(*)::int total
+     FROM purchases p
+     LEFT JOIN suppliers s ON s.id=p.supplier_id
+     WHERE p.organization_id=$1 AND p.branch_id=$2
+       AND ($3='' OR p.purchase_number ILIKE $4 OR COALESCE(p.supplier_invoice_number,'') ILIKE $4 OR COALESCE(s.name,'') ILIKE $4)
+       AND p.purchase_date >= $5::date
+       AND p.purchase_date < $6::date`,
+    params
+  )).rows[0]?.total||0);
+
+  const {rows}=await db.query(
+    `SELECT p.id,p.purchase_number,p.purchase_date,p.total,p.status,p.payment_status,s.name supplier
+     FROM purchases p
+     LEFT JOIN suppliers s ON s.id=p.supplier_id
+     WHERE p.organization_id=$1 AND p.branch_id=$2
+       AND ($3='' OR p.purchase_number ILIKE $4 OR COALESCE(p.supplier_invoice_number,'') ILIKE $4 OR COALESCE(s.name,'') ILIKE $4)
+       AND p.purchase_date >= $5::date
+       AND p.purchase_date < $6::date
+     ORDER BY p.purchase_date DESC,p.id DESC
+     LIMIT $7 OFFSET $8`,
+    [...params,pageSize,offset]
+  );
+  return {rows,total};
+}
+
 async function masters(db,organizationId){const suppliers=await db.query('SELECT id,name FROM suppliers WHERE organization_id=$1 AND active=true ORDER BY name LIMIT 20',[organizationId]);return {suppliers:suppliers.rows};}
 async function businessClock(db,organizationId){
   const {rows}=await db.query(
