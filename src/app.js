@@ -89,6 +89,7 @@ app.use('/sales',require('./modules/sales/sale.routes'));
 app.use('/expenses',require('./modules/expenses/expense.routes'));
 app.use('/reports',require('./modules/reports/report.routes'));
 app.use('/users',require('./modules/users/user.routes'));
+app.use('/profile',require('./modules/profile/profile.routes'));
 app.use('/roles',require('./modules/roles/role.routes'));
 app.use('/settings',require('./modules/settings/settings.routes'));
 
