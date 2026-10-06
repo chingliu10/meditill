@@ -3,6 +3,7 @@ const { pool } = require('../src/config/db');
 
 const permissions = [
   'medicine.view','medicine.create','medicine.edit','medicine.deactivate',
+  'supplier.view','supplier.manage',
   'purchase.view','purchase.create','purchase.receive','purchase.return',
   'inventory.view','inventory.adjust','inventory.transfer','inventory.stock_count',
   'sale.create','sale.view','sale.refund','sale.discount','sale.override_price',
