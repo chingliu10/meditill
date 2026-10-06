@@ -1,5 +1,6 @@
 const {pool}=require('../../config/db');
 const repo=require('./report.repository');
+const {safePage,pagination}=require('../../shared/list-pagination');
 function valid(value){return /^\d{4}-\d{2}-\d{2}$/.test(String(value||''));}
 
 const PNL_PERIODS={
@@ -42,10 +43,20 @@ async function sales(req,res,next){
 
 async function inventory(req,res,next){
   try{
-    res.render('reports/inventory',{
-      title:'Inventory Report',
-      rows:await repo.inventory(pool,req.session.user.organization_id,req.branch.id)
-    });
+    const q=String(req.query.q||'').trim();
+    const requestedPage=safePage(req.query.page);
+    let result=await repo.inventory(pool,req.session.user.organization_id,req.branch.id,{q,page:requestedPage,pageSize:25});
+    const makeUrl=page=>{
+      const params=new URLSearchParams();
+      if(q)params.set('q',q);
+      if(page>1)params.set('page',String(page));
+      return '/reports/inventory'+(params.toString()?('?'+params.toString()):'');
+    };
+    const pager=pagination(result.total,requestedPage,25,makeUrl);
+    if(pager.page!==requestedPage){
+      result=await repo.inventory(pool,req.session.user.organization_id,req.branch.id,{q,page:pager.page,pageSize:25});
+    }
+    res.render('reports/inventory',{title:'Inventory Report',rows:result.rows,q,pagination:pager});
   }catch(error){next(error);}
 }
 
@@ -66,9 +77,37 @@ async function purchases(req,res,next){
 
 async function expiry(req,res,next){
   try{
+    const q=String(req.query.q||'').trim();
+    const allowedDays=[30,60,90,365];
+    const requestedDays=Number(req.query.days||90);
+    const days=allowedDays.includes(requestedDays)?requestedDays:90;
+    const requestedPage=safePage(req.query.page);
+
+    let result=await repo.expiry(pool,req.branch.id,{q,days,page:requestedPage,pageSize:25});
+    const makeUrl=page=>{
+      const params=new URLSearchParams();
+      params.set('days',String(days));
+      if(q)params.set('q',q);
+      if(page>1)params.set('page',String(page));
+      return '/reports/expiry?'+params.toString();
+    };
+    const pager=pagination(result.total,requestedPage,25,makeUrl);
+    if(pager.page!==requestedPage){
+      result=await repo.expiry(pool,req.branch.id,{q,days,page:pager.page,pageSize:25});
+    }
+
     res.render('reports/expiry',{
       title:'Expiry Report',
-      rows:await repo.expiry(pool,req.branch.id)
+      rows:result.rows,
+      q,
+      days,
+      horizonOptions:[
+        {days:30,label:'Next 30 Days',active:days===30,url:'/reports/expiry?days=30'+(q?'&q='+encodeURIComponent(q):'')},
+        {days:60,label:'Next 60 Days',active:days===60,url:'/reports/expiry?days=60'+(q?'&q='+encodeURIComponent(q):'')},
+        {days:90,label:'Next 90 Days',active:days===90,url:'/reports/expiry?days=90'+(q?'&q='+encodeURIComponent(q):'')},
+        {days:365,label:'Next 1 Year',active:days===365,url:'/reports/expiry?days=365'+(q?'&q='+encodeURIComponent(q):'')}
+      ],
+      pagination:pager
     });
   }catch(error){next(error);}
 }
