@@ -188,7 +188,7 @@
   });
 
   document.addEventListener('change',event=>{
-    const select=event.target.closest?.('form[data-ajax-filter][data-debounce-search] select');
+    const select=event.target.closest?.('form[data-ajax-filter] select');
     if(!select)return;
     const form=select.form;
     clearTimeout(debounceTimers.get(form));
