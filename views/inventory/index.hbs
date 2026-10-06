@@ -12,7 +12,7 @@
 
   <div data-tab-panel="stock">
     <div class="mt-toolbar">
-      <form class="mt-sales-search mt-expense-filter" method="get" data-debounce-search="350">
+      <form class="mt-sales-search mt-expense-filter" method="get" data-debounce-search="350" data-ajax-filter data-ajax-target="inventory-stock">
         <input type="hidden" name="tab" value="stock">
         <input name="stock_q" value="{{stockQ}}" placeholder="Search medicine, generic or strength">
         <select name="stock_status">
@@ -23,7 +23,7 @@
       <span class="mt-toolbar-meta">25 medicines per page</span>
     </div>
 
-    <article class="mt-panel mt-panel-flush">
+    <article class="mt-panel mt-panel-flush" data-ajax-results="inventory-stock">
       <div class="mt-table-wrap">
         <table class="mt-table">
           <thead><tr><th>Medicine</th><th>Stock</th><th>Reorder</th><th>Next expiry</th><th>Value</th><th>Status</th></tr></thead>
@@ -55,7 +55,7 @@
 
   <div data-tab-panel="batches" hidden>
     <div class="mt-toolbar">
-      <form class="mt-sales-search mt-expense-filter" method="get" data-debounce-search="350">
+      <form class="mt-sales-search mt-expense-filter" method="get" data-debounce-search="350" data-ajax-filter data-ajax-target="inventory-batches">
         <input type="hidden" name="tab" value="batches">
         <input name="batch_q" value="{{batchQ}}" placeholder="Search medicine or batch">
         <select name="batch_status">
@@ -66,7 +66,7 @@
       <span class="mt-toolbar-meta">25 batches per page</span>
     </div>
 
-    <article class="mt-panel mt-panel-flush">
+    <article class="mt-panel mt-panel-flush" data-ajax-results="inventory-batches">
       <div class="mt-table-wrap">
         <table class="mt-table">
           <thead><tr><th>Medicine</th><th>Batch</th><th>Expiry</th><th>Qty</th><th>Cost</th><th>Status</th><th>Control</th></tr></thead>
@@ -120,18 +120,4 @@ function selectInventoryTab(name){
 document.querySelectorAll('[data-tab]').forEach(button=>button.onclick=()=>selectInventoryTab(button.dataset.tab));
 selectInventoryTab(initialInventoryTab||'stock');
 
-document.querySelectorAll('.batch-status').forEach(select=>select.onchange=async()=>{
-  if(!select.value)return;
-  const ok=await MediTillConfirm({title:'Change batch status?',message:'This affects whether the batch can be sold.'});
-  if(!ok){select.value='';return;}
-  const response=await fetch('/inventory/batches/'+select.dataset.batch+'/status',{
-    method:'POST',
-    headers:{'content-type':'application/json'},
-    body:JSON.stringify({status:select.value})
-  });
-  const data=await response.json();
-  if(!response.ok){MediTillToast(data.error||'Failed','error');select.value='';return;}
-  MediTillToast('Batch status updated.','success');
-  setTimeout(()=>location.reload(),500);
-});
 </script>
