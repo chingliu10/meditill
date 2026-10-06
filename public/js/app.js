@@ -91,6 +91,27 @@
     });
   });
 
+  // Debounced GET filters: type, pause briefly, then submit automatically.
+  document.querySelectorAll('form[data-debounce-search]').forEach(form=>{
+    let timer=null;
+    const delay=Math.max(150,Number(form.dataset.debounceSearch)||350);
+    const schedule=()=>{
+      clearTimeout(timer);
+      timer=setTimeout(()=>form.requestSubmit(),delay);
+    };
+
+    form.querySelectorAll('input[type="text"],input[type="search"],input:not([type])').forEach(input=>{
+      input.addEventListener('input',schedule);
+    });
+
+    form.querySelectorAll('select').forEach(select=>{
+      select.addEventListener('change',()=>{
+        clearTimeout(timer);
+        form.requestSubmit();
+      });
+    });
+  });
+
   const installButton=document.getElementById('installApp');
   let deferredInstallPrompt=null;
   const standalone=window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
