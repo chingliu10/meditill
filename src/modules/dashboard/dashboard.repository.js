@@ -138,21 +138,29 @@ async function topSelling(db,branchId,startDate,endDate,timezone){
       WHERE branch_id=$1
         AND status IN('COMPLETED','PARTIALLY_REFUNDED','REFUNDED')
         AND ${rangeSql('created_at',2,3,4)}
+    ),
+    item_returns AS (
+      SELECT
+        sri.sale_item_id,
+        COALESCE(SUM(sri.quantity),0) returned_quantity,
+        COALESCE(SUM(sri.refund_amount),0) refund_amount
+      FROM sale_return_items sri
+      JOIN sale_returns sr ON sr.id=sri.sale_return_id
+      WHERE sr.sale_id IN(SELECT id FROM period_sales)
+      GROUP BY sri.sale_item_id
     )
     SELECT
       m.id,m.name,m.strength,m.image_path,
-      SUM(si.quantity)-COALESCE((
-        SELECT SUM(sri.quantity)
-        FROM sale_return_items sri
-        JOIN sale_returns sr ON sr.id=sri.sale_return_id
-        JOIN sale_items sx ON sx.id=sri.sale_item_id
-        WHERE sx.medicine_id=m.id AND sr.sale_id IN(SELECT id FROM period_sales)
-      ),0) quantity_sold,
-      SUM(si.line_total) revenue
+      SUM(si.quantity-COALESCE(ir.returned_quantity,0)) quantity_sold,
+      SUM(si.line_total-COALESCE(ir.refund_amount,0)) revenue
     FROM sale_items si
     JOIN period_sales ps ON ps.id=si.sale_id
     JOIN medicines m ON m.id=si.medicine_id
+    LEFT JOIN item_returns ir ON ir.sale_item_id=si.id
     GROUP BY m.id
+    HAVING
+      SUM(si.quantity-COALESCE(ir.returned_quantity,0))>0
+      OR SUM(si.line_total-COALESCE(ir.refund_amount,0))>0
     ORDER BY quantity_sold DESC,revenue DESC
     LIMIT 6`,
     [branchId,startDate,endDate,timezone]
