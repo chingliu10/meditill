@@ -8,7 +8,7 @@ const permissions = [
   'inventory.view','inventory.adjust','inventory.transfer','inventory.stock_count',
   'sale.create','sale.view','sale.refund','sale.discount','sale.override_price',
   'register.open','register.close','register.cash_in','register.cash_out',
-  'reports.sales','reports.profit','reports.inventory',
+  'reports.sales','reports.profit','reports.inventory','reports.purchases',
   'users.manage','roles.manage','branches.manage','settings.manage'
 ];
 
