@@ -1,11 +1,137 @@
 <section class="mt-page">
-<div class="mt-page-header"><div><p class="mt-eyebrow">INVENTORY</p><h1>Stock control</h1><p>Saleable stock, batches, expiry and controlled adjustments.</p></div><a href="/transfers" class="mt-btn mt-btn-secondary mt-btn-lg">Branch transfers</a></div>
-<div class="mt-tabbar"><button class="mt-tab is-active" data-tab="stock">Stock summary</button><button class="mt-tab" data-tab="batches">Batches</button><button class="mt-tab" data-tab="adjust">Adjustment</button></div>
-<div data-tab-panel="stock"><article class="mt-panel mt-panel-flush"><div class="mt-table-wrap"><table class="mt-table"><thead><tr><th>Medicine</th><th>Stock</th><th>Reorder</th><th>Next expiry</th><th>Value</th><th>Status</th></tr></thead><tbody>{{#each stock}}<tr><td><div class="mt-medicine-cell"><img class="mt-medicine-thumb" src="{{#if image_path}}{{image_path}}{{else}}/images/default-medicine.svg{{/if}}"><div><strong>{{name}} {{strength}}</strong><small>{{generic_name}}</small></div></div></td><td><strong>{{quantity saleable_stock}}</strong><small class="mt-cell-sub">{{unit_name}}</small></td><td>{{quantity reorder_level}}</td><td>{{date next_expiry}}</td><td>TZS {{money stock_value}}</td><td><span class="mt-status mt-status-{{stockClass saleable_stock reorder_level}}">{{stockLabel saleable_stock reorder_level}}</span></td></tr>{{else}}<tr><td colspan="6"><div class="mt-empty-state">No inventory.</div></td></tr>{{/each}}</tbody></table></div></article></div>
-<div data-tab-panel="batches" hidden><div class="mt-toolbar"><form class="mt-search-form"><span class="mt-search-icon">⌕</span><input name="q" value="{{q}}" placeholder="Search medicine or batch"><button class="mt-btn mt-btn-primary">Search</button></form></div><article class="mt-panel mt-panel-flush"><div class="mt-table-wrap"><table class="mt-table"><thead><tr><th>Medicine</th><th>Batch</th><th>Expiry</th><th>Qty</th><th>Cost</th><th>Status</th><th>Control</th></tr></thead><tbody>{{#each batches}}<tr><td><strong>{{name}} {{strength}}</strong></td><td><span class="mt-code">{{batch_number}}</span></td><td>{{date expiry_date}}</td><td>{{quantity quantity_available}}</td><td>TZS {{money unit_cost}}</td><td><span class="mt-status mt-status-info">{{status}}</span></td><td><select class="mt-inline-select batch-status" data-batch="{{id}}"><option value="">Change...</option><option>SALEABLE</option><option>QUARANTINED</option><option>RECALLED</option><option>DAMAGED</option></select></td></tr>{{/each}}</tbody></table></div></article></div>
-<div data-tab-panel="adjust" hidden><article class="mt-panel mt-form-panel mt-form-narrow"><div class="mt-panel-header"><div><h2>Stock adjustment</h2><p>All changes are written to the stock ledger.</p></div></div><form method="post" action="/inventory/adjustments" class="mt-panel-body mt-form-stack"><label>Batch<select name="batch_id" required><option value="">Select batch</option>{{#each batches}}<option value="{{id}}">{{name}} {{strength}} · {{batch_number}} · Qty {{quantity quantity_available}}</option>{{/each}}</select></label><label>Quantity change<input type="number" step="0.0001" name="quantity_change" placeholder="+5 or -2" required></label><label>Reason<select name="reason"><option>COUNT_CORRECTION</option><option>DAMAGE</option><option>FOUND_STOCK</option><option>DATA_CORRECTION</option></select></label><label>Notes<textarea name="notes" rows="3"></textarea></label><button class="mt-btn mt-btn-primary mt-btn-lg">Post adjustment</button></form></article></div>
+  <div class="mt-page-header">
+    <div><p class="mt-eyebrow">INVENTORY</p><h1>Stock control</h1><p>Saleable stock, batches, expiry and controlled adjustments.</p></div>
+    <a href="/transfers" class="mt-btn mt-btn-secondary mt-btn-lg">Branch transfers</a>
+  </div>
+
+  <div class="mt-tabbar">
+    <button class="mt-tab" data-tab="stock">Stock summary</button>
+    <button class="mt-tab" data-tab="batches">Batches</button>
+    <button class="mt-tab" data-tab="adjust">Adjustment</button>
+  </div>
+
+  <div data-tab-panel="stock">
+    <div class="mt-toolbar">
+      <form class="mt-sales-search mt-expense-filter" method="get">
+        <input type="hidden" name="tab" value="stock">
+        <input name="stock_q" value="{{stockQ}}" placeholder="Search medicine, generic or strength">
+        <select name="stock_status">
+          {{#each stockStatusOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+        </select>
+        <button class="mt-btn mt-btn-primary">Filter</button>
+      </form>
+      <span class="mt-toolbar-meta">25 medicines per page</span>
+    </div>
+
+    <article class="mt-panel mt-panel-flush">
+      <div class="mt-table-wrap">
+        <table class="mt-table">
+          <thead><tr><th>Medicine</th><th>Stock</th><th>Reorder</th><th>Next expiry</th><th>Value</th><th>Status</th></tr></thead>
+          <tbody>
+            {{#each stock}}
+            <tr>
+              <td><div class="mt-medicine-cell"><img class="mt-medicine-thumb" src="{{#if image_path}}{{image_path}}{{else}}/images/default-medicine.svg{{/if}}"><div><strong>{{name}} {{strength}}</strong><small>{{generic_name}}</small></div></div></td>
+              <td><strong>{{quantity saleable_stock}}</strong><small class="mt-cell-sub">{{unit_name}}</small></td>
+              <td>{{quantity reorder_level}}</td>
+              <td>{{date next_expiry}}</td>
+              <td>TZS {{money stock_value}}</td>
+              <td><span class="mt-status mt-status-{{stockClass saleable_stock reorder_level}}">{{stockLabel saleable_stock reorder_level}}</span></td>
+            </tr>
+            {{else}}<tr><td colspan="6"><div class="mt-empty-state">No inventory found.</div></td></tr>{{/each}}
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-pagination-bar">
+        <div class="mt-pagination-summary">{{#if stockPagination.totalRows}}Showing <strong>{{stockPagination.firstRow}}–{{stockPagination.lastRow}}</strong> of <strong>{{stockPagination.totalRows}}</strong>{{else}}0 medicines{{/if}}</div>
+        <nav class="mt-pagination">
+          {{#if stockPagination.hasPrevious}}<a class="mt-page-link" href="{{stockPagination.previousUrl}}">‹ Previous</a>{{else}}<span class="mt-page-link is-disabled">‹ Previous</span>{{/if}}
+          {{#each stockPagination.pageLinks}}<a class="mt-page-link mt-page-number {{#if active}}is-active{{/if}}" href="{{url}}">{{value}}</a>{{/each}}
+          {{#if stockPagination.hasNext}}<a class="mt-page-link" href="{{stockPagination.nextUrl}}">Next ›</a>{{else}}<span class="mt-page-link is-disabled">Next ›</span>{{/if}}
+        </nav>
+        <div class="mt-pagination-page">Page {{stockPagination.page}} of {{stockPagination.totalPages}} · 25 rows</div>
+      </div>
+    </article>
+  </div>
+
+  <div data-tab-panel="batches" hidden>
+    <div class="mt-toolbar">
+      <form class="mt-sales-search mt-expense-filter" method="get">
+        <input type="hidden" name="tab" value="batches">
+        <input name="batch_q" value="{{batchQ}}" placeholder="Search medicine or batch">
+        <select name="batch_status">
+          {{#each batchStatusOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+        </select>
+        <button class="mt-btn mt-btn-primary">Filter</button>
+      </form>
+      <span class="mt-toolbar-meta">25 batches per page</span>
+    </div>
+
+    <article class="mt-panel mt-panel-flush">
+      <div class="mt-table-wrap">
+        <table class="mt-table">
+          <thead><tr><th>Medicine</th><th>Batch</th><th>Expiry</th><th>Qty</th><th>Cost</th><th>Status</th><th>Control</th></tr></thead>
+          <tbody>
+            {{#each batches}}
+            <tr>
+              <td><strong>{{name}} {{strength}}</strong></td>
+              <td><span class="mt-code">{{batch_number}}</span></td>
+              <td>{{date expiry_date}}</td>
+              <td>{{quantity quantity_available}}</td>
+              <td>TZS {{money unit_cost}}</td>
+              <td><span class="mt-status mt-status-info">{{status}}</span></td>
+              <td><select class="mt-inline-select batch-status" data-batch="{{id}}"><option value="">Change...</option><option>SALEABLE</option><option>QUARANTINED</option><option>RECALLED</option><option>DAMAGED</option></select></td>
+            </tr>
+            {{else}}<tr><td colspan="7"><div class="mt-empty-state">No batches found.</div></td></tr>{{/each}}
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-pagination-bar">
+        <div class="mt-pagination-summary">{{#if batchPagination.totalRows}}Showing <strong>{{batchPagination.firstRow}}–{{batchPagination.lastRow}}</strong> of <strong>{{batchPagination.totalRows}}</strong>{{else}}0 batches{{/if}}</div>
+        <nav class="mt-pagination">
+          {{#if batchPagination.hasPrevious}}<a class="mt-page-link" href="{{batchPagination.previousUrl}}">‹ Previous</a>{{else}}<span class="mt-page-link is-disabled">‹ Previous</span>{{/if}}
+          {{#each batchPagination.pageLinks}}<a class="mt-page-link mt-page-number {{#if active}}is-active{{/if}}" href="{{url}}">{{value}}</a>{{/each}}
+          {{#if batchPagination.hasNext}}<a class="mt-page-link" href="{{batchPagination.nextUrl}}">Next ›</a>{{else}}<span class="mt-page-link is-disabled">Next ›</span>{{/if}}
+        </nav>
+        <div class="mt-pagination-page">Page {{batchPagination.page}} of {{batchPagination.totalPages}} · 25 rows</div>
+      </div>
+    </article>
+  </div>
+
+  <div data-tab-panel="adjust" hidden>
+    <article class="mt-panel mt-form-panel mt-form-narrow">
+      <div class="mt-panel-header"><div><h2>Stock adjustment</h2><p>All changes are written to the stock ledger.</p></div></div>
+      <form method="post" action="/inventory/adjustments" class="mt-panel-body mt-form-stack">
+        <label>Batch<select name="batch_id" required><option value="">Select batch</option>{{#each adjustmentBatches}}<option value="{{id}}">{{name}} {{strength}} · {{batch_number}} · Qty {{quantity quantity_available}}</option>{{/each}}</select></label>
+        <label>Quantity change<input type="number" step="0.0001" name="quantity_change" placeholder="+5 or -2" required></label>
+        <label>Reason<select name="reason"><option>COUNT_CORRECTION</option><option>DAMAGE</option><option>FOUND_STOCK</option><option>DATA_CORRECTION</option></select></label>
+        <label>Notes<textarea name="notes" rows="3"></textarea></label>
+        <button class="mt-btn mt-btn-primary mt-btn-lg">Post adjustment</button>
+      </form>
+    </article>
+  </div>
 </section>
+
 <script>
-document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('is-active',x===b));document.querySelectorAll('[data-tab-panel]').forEach(p=>p.hidden=p.dataset.tabPanel!==b.dataset.tab)});
-document.querySelectorAll('.batch-status').forEach(s=>s.onchange=async()=>{if(!s.value)return;const ok=await MediTillConfirm({title:'Change batch status?',message:'This affects whether the batch can be sold.'});if(!ok){s.value='';return}const r=await fetch('/inventory/batches/'+s.dataset.batch+'/status',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({status:s.value})});const j=await r.json();if(!r.ok)return MediTillToast(j.error||'Failed','error');MediTillToast('Batch status updated.');setTimeout(()=>location.reload(),500)});
+const initialInventoryTab={{json activeTab}};
+function selectInventoryTab(name){
+  document.querySelectorAll('[data-tab]').forEach(button=>button.classList.toggle('is-active',button.dataset.tab===name));
+  document.querySelectorAll('[data-tab-panel]').forEach(panel=>panel.hidden=panel.dataset.tabPanel!==name);
+}
+document.querySelectorAll('[data-tab]').forEach(button=>button.onclick=()=>selectInventoryTab(button.dataset.tab));
+selectInventoryTab(initialInventoryTab||'stock');
+
+document.querySelectorAll('.batch-status').forEach(select=>select.onchange=async()=>{
+  if(!select.value)return;
+  const ok=await MediTillConfirm({title:'Change batch status?',message:'This affects whether the batch can be sold.'});
+  if(!ok){select.value='';return;}
+  const response=await fetch('/inventory/batches/'+select.dataset.batch+'/status',{
+    method:'POST',
+    headers:{'content-type':'application/json'},
+    body:JSON.stringify({status:select.value})
+  });
+  const data=await response.json();
+  if(!response.ok){MediTillToast(data.error||'Failed','error');select.value='';return;}
+  MediTillToast('Batch status updated.','success');
+  setTimeout(()=>location.reload(),500);
+});
 </script>
