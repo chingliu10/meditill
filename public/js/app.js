@@ -112,6 +112,18 @@
     });
   });
 
+  document.querySelectorAll('[data-password-toggle]').forEach(toggle=>{
+    toggle.addEventListener('click',()=>{
+      const input=document.getElementById(toggle.dataset.passwordToggle);
+      if(!input)return;
+      const showing=input.type==='text';
+      input.type=showing?'password':'text';
+      toggle.setAttribute('aria-label',showing?'Show password':'Hide password');
+      toggle.setAttribute('title',showing?'Show password':'Hide password');
+      toggle.classList.toggle('is-visible',!showing);
+    });
+  });
+
   const installButton=document.getElementById('installApp');
   let deferredInstallPrompt=null;
   const standalone=window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
