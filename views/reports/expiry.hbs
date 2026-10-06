@@ -15,7 +15,7 @@
     <div class="mt-period-strip" aria-label="Expiry horizon">
       {{#each horizonOptions}}<a href="{{url}}" class="mt-period-chip {{#if active}}is-active{{/if}}">{{label}}</a>{{/each}}
     </div>
-    <form class="mt-sales-search" method="get">
+    <form class="mt-sales-search" method="get" data-debounce-search="350">
       <input type="hidden" name="days" value="{{days}}">
       <input name="q" value="{{q}}" placeholder="Search medicine or batch">
       {{#if q}}<a href="/reports/expiry?days={{days}}" class="mt-search-clear">×</a>{{/if}}
