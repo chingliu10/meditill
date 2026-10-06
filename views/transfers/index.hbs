@@ -1,3 +1,62 @@
-<section class="mt-page"><div class="mt-page-header"><div><p class="mt-eyebrow">INVENTORY</p><h1>Branch transfers</h1><p>Stock leaves the source immediately and is received explicitly at the destination.</p></div><a href="/inventory" class="mt-btn mt-btn-secondary">Inventory</a></div>
-<div class="mt-two-column"><article class="mt-panel"><div class="mt-panel-header"><div><h2>Transfer history</h2></div></div><div class="mt-table-wrap"><table class="mt-table"><thead><tr><th>No.</th><th>From</th><th>To</th><th>Status</th><th>Date</th><th></th></tr></thead><tbody>{{#each transfers}}<tr><td><strong>{{transfer_number}}</strong></td><td>{{from_branch}}</td><td>{{to_branch}}</td><td><span class="mt-status mt-status-info">{{status}}</span></td><td>{{dateTime created_at}}</td><td>{{#if (eq status "IN_TRANSIT")}}<form method="post" action="/transfers/{{id}}/receive"><button class="mt-btn mt-btn-secondary">Receive here</button></form>{{/if}}</td></tr>{{else}}<tr><td colspan="6"><div class="mt-empty-state">No transfers.</div></td></tr>{{/each}}</tbody></table></div></article>
-<article class="mt-panel mt-form-panel"><div class="mt-panel-header"><div><h2>Send stock</h2></div></div><form method="post" class="mt-panel-body mt-form-stack"><label>Destination<select name="to_branch_id" required><option value="">Choose branch</option>{{#each destinations}}<option value="{{id}}">{{name}}</option>{{/each}}</select></label><label>Batch<select name="batch_id" required><option value="">Choose batch</option>{{#each batches}}<option value="{{id}}">{{name}} {{strength}} · {{batch_number}} · {{quantity quantity_available}}</option>{{/each}}</select></label><label>Quantity<input type="number" min="0.0001" step="0.0001" name="quantity" required></label><button class="mt-btn mt-btn-primary mt-btn-lg">Send transfer</button></form></article></div></section>
+<section class="mt-page">
+  <div class="mt-page-header">
+    <div><p class="mt-eyebrow">INVENTORY</p><h1>Branch transfers</h1><p>Stock leaves the source immediately and is received explicitly at the destination.</p></div>
+    <a href="/inventory" class="mt-btn mt-btn-secondary">Inventory</a>
+  </div>
+
+  <div class="mt-sales-filterbar">
+    <div class="mt-period-strip" aria-label="Transfer period">
+      {{#each periods}}<a href="{{url}}" class="mt-period-chip {{#if active}}is-active{{/if}}">{{label}}</a>{{/each}}
+    </div>
+    <form class="mt-sales-search mt-expense-filter" method="get">
+      <input type="hidden" name="period" value="{{period}}">
+      <input name="q" value="{{q}}" placeholder="Search transfer or branch">
+      <select name="status">
+        {{#each statusOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+      </select>
+      <button class="mt-btn mt-btn-primary">Filter</button>
+    </form>
+  </div>
+
+  <div class="mt-two-column">
+    <article class="mt-panel">
+      <div class="mt-panel-header"><div><h2>Transfer history</h2><p>25 transfers per page</p></div></div>
+      <div class="mt-table-wrap">
+        <table class="mt-table">
+          <thead><tr><th>No.</th><th>From</th><th>To</th><th>Status</th><th>Date</th><th></th></tr></thead>
+          <tbody>
+            {{#each transfers}}
+            <tr>
+              <td><strong>{{transfer_number}}</strong></td>
+              <td>{{from_branch}}</td>
+              <td>{{to_branch}}</td>
+              <td><span class="mt-status mt-status-info">{{status}}</span></td>
+              <td>{{dateTime created_at}}</td>
+              <td>{{#if (eq status "IN_TRANSIT")}}<form method="post" action="/transfers/{{id}}/receive"><button class="mt-btn mt-btn-secondary">Receive here</button></form>{{/if}}</td>
+            </tr>
+            {{else}}<tr><td colspan="6"><div class="mt-empty-state">No transfers found for this period.</div></td></tr>{{/each}}
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-pagination-bar">
+        <div class="mt-pagination-summary">{{#if pagination.totalRows}}Showing <strong>{{pagination.firstRow}}–{{pagination.lastRow}}</strong> of <strong>{{pagination.totalRows}}</strong>{{else}}0 transfers{{/if}}</div>
+        <nav class="mt-pagination">
+          {{#if pagination.hasPrevious}}<a class="mt-page-link" href="{{pagination.previousUrl}}">‹ Previous</a>{{else}}<span class="mt-page-link is-disabled">‹ Previous</span>{{/if}}
+          {{#each pagination.pageLinks}}<a class="mt-page-link mt-page-number {{#if active}}is-active{{/if}}" href="{{url}}">{{value}}</a>{{/each}}
+          {{#if pagination.hasNext}}<a class="mt-page-link" href="{{pagination.nextUrl}}">Next ›</a>{{else}}<span class="mt-page-link is-disabled">Next ›</span>{{/if}}
+        </nav>
+        <div class="mt-pagination-page">Page {{pagination.page}} of {{pagination.totalPages}} · 25 rows</div>
+      </div>
+    </article>
+
+    <article class="mt-panel mt-form-panel">
+      <div class="mt-panel-header"><div><h2>Send stock</h2></div></div>
+      <form method="post" class="mt-panel-body mt-form-stack">
+        <label>Destination<select name="to_branch_id" required><option value="">Choose branch</option>{{#each destinations}}<option value="{{id}}">{{name}}</option>{{/each}}</select></label>
+        <label>Batch<select name="batch_id" required><option value="">Choose batch</option>{{#each batches}}<option value="{{id}}">{{name}} {{strength}} · {{batch_number}} · {{quantity quantity_available}}</option>{{/each}}</select></label>
+        <label>Quantity<input type="number" min="0.0001" step="0.0001" name="quantity" required></label>
+        <button class="mt-btn mt-btn-primary mt-btn-lg">Send transfer</button>
+      </form>
+    </article>
+  </div>
+</section>
