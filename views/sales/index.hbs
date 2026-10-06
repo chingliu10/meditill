@@ -15,7 +15,7 @@
       {{/each}}
     </div>
 
-    <form class="mt-sales-search" method="get">
+    <form class="mt-sales-search" method="get" data-debounce-search="350">
       <input type="hidden" name="period" value="{{period}}">
       <input name="q" value="{{q}}" placeholder="Search sale number or customer">
       {{#if q}}<a href="/sales?period={{period}}" class="mt-search-clear" aria-label="Clear search">×</a>{{/if}}
