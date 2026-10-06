@@ -6,9 +6,23 @@
     <a class="is-active" href="/reports/expiry">Expiry</a>
     <a href="/reports/profit-loss">P&amp;L</a>
   </div>
+
   <div class="mt-page-header">
-    <div><p class="mt-eyebrow">REPORTS</p><h1>Expiry risk</h1><p>Expired and next 90 days.</p></div>
+    <div><p class="mt-eyebrow">REPORTS</p><h1>Expiry risk</h1><p>Current expired stock and future expiry exposure.</p></div>
   </div>
+
+  <div class="mt-sales-filterbar">
+    <div class="mt-period-strip" aria-label="Expiry horizon">
+      {{#each horizonOptions}}<a href="{{url}}" class="mt-period-chip {{#if active}}is-active{{/if}}">{{label}}</a>{{/each}}
+    </div>
+    <form class="mt-sales-search" method="get">
+      <input type="hidden" name="days" value="{{days}}">
+      <input name="q" value="{{q}}" placeholder="Search medicine or batch">
+      {{#if q}}<a href="/reports/expiry?days={{days}}" class="mt-search-clear">×</a>{{/if}}
+      <button class="mt-btn mt-btn-primary">Search</button>
+    </form>
+  </div>
+
   <article class="mt-panel mt-panel-flush">
     <div class="mt-table-wrap">
       <table class="mt-table">
@@ -17,10 +31,19 @@
           {{#each rows}}
           <tr><td><strong>{{name}} {{strength}}</strong></td><td>{{batch_number}}</td><td>{{date expiry_date}}</td><td><span class="mt-status mt-status-warning">{{bucket}}</span></td><td>{{quantity quantity_available}}</td><td><strong>TZS {{money value_at_risk}}</strong></td></tr>
           {{else}}
-          <tr><td colspan="6"><div class="mt-empty-state">No expiry risk in the next 90 days.</div></td></tr>
+          <tr><td colspan="6"><div class="mt-empty-state">No expiry risk in this horizon.</div></td></tr>
           {{/each}}
         </tbody>
       </table>
+    </div>
+    <div class="mt-pagination-bar">
+      <div class="mt-pagination-summary">{{#if pagination.totalRows}}Showing <strong>{{pagination.firstRow}}–{{pagination.lastRow}}</strong> of <strong>{{pagination.totalRows}}</strong>{{else}}0 rows{{/if}}</div>
+      <nav class="mt-pagination">
+        {{#if pagination.hasPrevious}}<a class="mt-page-link" href="{{pagination.previousUrl}}">‹ Previous</a>{{else}}<span class="mt-page-link is-disabled">‹ Previous</span>{{/if}}
+        {{#each pagination.pageLinks}}<a class="mt-page-link mt-page-number {{#if active}}is-active{{/if}}" href="{{url}}">{{value}}</a>{{/each}}
+        {{#if pagination.hasNext}}<a class="mt-page-link" href="{{pagination.nextUrl}}">Next ›</a>{{else}}<span class="mt-page-link is-disabled">Next ›</span>{{/if}}
+      </nav>
+      <div class="mt-pagination-page">Page {{pagination.page}} of {{pagination.totalPages}} · 25 rows</div>
     </div>
   </article>
 </section>
