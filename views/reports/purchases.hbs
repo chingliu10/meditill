@@ -1,1 +1,31 @@
-<section class="mt-page"><div class="mt-report-nav"><a href="/reports/sales">Sales</a><a href="/reports/inventory">Inventory</a><a class="is-active" href="/reports/purchases">Purchases</a><a href="/reports/expiry">Expiry</a></div><div class="mt-page-header"><div><p class="mt-eyebrow">REPORTS</p><h1>Purchases</h1></div></div><div class="mt-toolbar"><form class="mt-filter-form"><label>From<input type="date" name="from" value="{{from}}"></label><label>To<input type="date" name="to" value="{{to}}"></label><button class="mt-btn mt-btn-primary">Apply</button></form></div><article class="mt-panel mt-panel-flush"><div class="mt-table-wrap"><table class="mt-table"><thead><tr><th>Date</th><th>Purchases</th><th>Total</th></tr></thead><tbody>{{#each rows}}<tr><td>{{date purchase_date}}</td><td>{{purchases}}</td><td><strong>TZS {{money total}}</strong></td></tr>{{/each}}</tbody></table></div></article></section>
+<section class="mt-page">
+  <div class="mt-report-nav">
+    <a href="/reports/sales">Sales</a>
+    <a href="/reports/inventory">Inventory</a>
+    <a class="is-active" href="/reports/purchases">Purchases</a>
+    <a href="/reports/expiry">Expiry</a>
+    <a href="/reports/profit-loss">P&amp;L</a>
+  </div>
+  <div class="mt-page-header"><div><p class="mt-eyebrow">REPORTS</p><h1>Purchases</h1></div></div>
+  <div class="mt-toolbar">
+    <form class="mt-filter-form">
+      <label>From<input type="date" name="from" value="{{from}}"></label>
+      <label>To<input type="date" name="to" value="{{to}}"></label>
+      <button class="mt-btn mt-btn-primary">Apply</button>
+    </form>
+  </div>
+  <article class="mt-panel mt-panel-flush">
+    <div class="mt-table-wrap">
+      <table class="mt-table">
+        <thead><tr><th>Date</th><th>Purchases</th><th>Total</th></tr></thead>
+        <tbody>
+          {{#each rows}}
+          <tr><td>{{date purchase_date}}</td><td>{{purchases}}</td><td><strong>TZS {{money total}}</strong></td></tr>
+          {{else}}
+          <tr><td colspan="3"><div class="mt-empty-state">No purchases for this period.</div></td></tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
