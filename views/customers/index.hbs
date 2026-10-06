@@ -8,7 +8,7 @@
     <article class="mt-panel">
       <div class="mt-panel-header"><div><h2>Customer list</h2><p>25 customers per page</p></div></div>
       <div class="mt-panel-body">
-        <form class="mt-search-form" method="get">
+        <form class="mt-search-form" method="get" data-debounce-search="350">
           {{#if showArchived}}<input type="hidden" name="archived" value="1">{{/if}}
           <span class="mt-search-icon">⌕</span>
           <input name="q" value="{{q}}" placeholder="Search name, phone or email">
