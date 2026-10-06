@@ -1,1 +1,49 @@
-<section class="mt-page"><div class="mt-page-header"><div><p class="mt-eyebrow">INVENTORY</p><h1>Physical stock counts</h1><p>Count batch-level stock and post audited corrections.</p></div><form method="post"><button class="mt-btn mt-btn-primary mt-btn-lg">Start new count</button></form></div><article class="mt-panel mt-panel-flush"><div class="mt-table-wrap"><table class="mt-table"><thead><tr><th>Count</th><th>Started</th><th>By</th><th>Status</th><th></th></tr></thead><tbody>{{#each counts}}<tr><td><strong>{{count_number}}</strong></td><td>{{dateTime started_at}}</td><td>{{started_by_name}}</td><td><span class="mt-status mt-status-info">{{status}}</span></td><td class="mt-text-right"><a class="mt-action-link" href="/stock-counts/{{id}}">Open</a></td></tr>{{else}}<tr><td colspan="5"><div class="mt-empty-state">No stock counts.</div></td></tr>{{/each}}</tbody></table></div></article></section>
+<section class="mt-page">
+  <div class="mt-page-header">
+    <div><p class="mt-eyebrow">INVENTORY</p><h1>Physical stock counts</h1><p>Count batch-level stock and post audited corrections.</p></div>
+    <form method="post"><button class="mt-btn mt-btn-primary mt-btn-lg">Start new count</button></form>
+  </div>
+
+  <div class="mt-sales-filterbar">
+    <div class="mt-period-strip" aria-label="Stock count period">
+      {{#each periods}}<a href="{{url}}" class="mt-period-chip {{#if active}}is-active{{/if}}">{{label}}</a>{{/each}}
+    </div>
+    <form class="mt-sales-search mt-expense-filter" method="get">
+      <input type="hidden" name="period" value="{{period}}">
+      <input name="q" value="{{q}}" placeholder="Search count number or user">
+      <select name="status">
+        {{#each statusOptions}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+      </select>
+      <button class="mt-btn mt-btn-primary">Filter</button>
+    </form>
+  </div>
+
+  <article class="mt-panel mt-panel-flush">
+    <div class="mt-table-wrap">
+      <table class="mt-table">
+        <thead><tr><th>Count</th><th>Started</th><th>By</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          {{#each counts}}
+          <tr>
+            <td><strong>{{count_number}}</strong></td>
+            <td>{{dateTime started_at}}</td>
+            <td>{{started_by_name}}</td>
+            <td><span class="mt-status mt-status-info">{{status}}</span></td>
+            <td class="mt-text-right"><a class="mt-action-link" href="/stock-counts/{{id}}">Open</a></td>
+          </tr>
+          {{else}}<tr><td colspan="5"><div class="mt-empty-state">No stock counts found for this period.</div></td></tr>{{/each}}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-pagination-bar">
+      <div class="mt-pagination-summary">{{#if pagination.totalRows}}Showing <strong>{{pagination.firstRow}}–{{pagination.lastRow}}</strong> of <strong>{{pagination.totalRows}}</strong>{{else}}0 counts{{/if}}</div>
+      <nav class="mt-pagination">
+        {{#if pagination.hasPrevious}}<a class="mt-page-link" href="{{pagination.previousUrl}}">‹ Previous</a>{{else}}<span class="mt-page-link is-disabled">‹ Previous</span>{{/if}}
+        {{#each pagination.pageLinks}}<a class="mt-page-link mt-page-number {{#if active}}is-active{{/if}}" href="{{url}}">{{value}}</a>{{/each}}
+        {{#if pagination.hasNext}}<a class="mt-page-link" href="{{pagination.nextUrl}}">Next ›</a>{{else}}<span class="mt-page-link is-disabled">Next ›</span>{{/if}}
+      </nav>
+      <div class="mt-pagination-page">Page {{pagination.page}} of {{pagination.totalPages}} · 25 rows</div>
+    </div>
+  </article>
+</section>
