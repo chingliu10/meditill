@@ -13,17 +13,17 @@
 
   <div class="mt-sales-filterbar">
     <div class="mt-period-strip" aria-label="Expiry horizon">
-      {{#each horizonOptions}}<a href="{{url}}" class="mt-period-chip {{#if active}}is-active{{/if}}">{{label}}</a>{{/each}}
+      {{#each horizonOptions}}<a href="{{url}}" class="mt-period-chip {{#if active}}is-active{{/if}}" data-ajax-target="report-expiry">{{label}}</a>{{/each}}
     </div>
-    <form class="mt-sales-search" method="get" data-debounce-search="350">
+    <form class="mt-sales-search" method="get" data-debounce-search="350" data-ajax-filter data-ajax-target="report-expiry">
       <input type="hidden" name="days" value="{{days}}">
       <input name="q" value="{{q}}" placeholder="Search medicine or batch">
-      {{#if q}}<a href="/reports/expiry?days={{days}}" class="mt-search-clear">×</a>{{/if}}
+      {{#if q}}<a href="/reports/expiry?days={{days}}" class="mt-search-clear" data-ajax-target="report-expiry">×</a>{{/if}}
       <button class="mt-btn mt-btn-primary">Search</button>
     </form>
   </div>
 
-  <article class="mt-panel mt-panel-flush">
+  <article class="mt-panel mt-panel-flush" data-ajax-results="report-expiry">
     <div class="mt-table-wrap">
       <table class="mt-table">
         <thead><tr><th>Medicine</th><th>Batch</th><th>Expiry</th><th>Bucket</th><th>Qty</th><th>Value at risk</th></tr></thead>
