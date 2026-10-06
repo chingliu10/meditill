@@ -11,12 +11,17 @@
   const customerResults=document.querySelector('#customerResults');
   const paymentMethod=document.querySelector('#paymentMethod');
   const changePreview=document.querySelector('#changePreview');
+  const mobileCartBar=document.querySelector('#mobileCartBar');
+  const mobileCartCount=document.querySelector('#mobileCartCount');
+  const mobileCartTotal=document.querySelector('#mobileCartTotal');
+  const mobileCartClose=document.querySelector('#mobileCartClose');
+  const mobileCartBackdrop=document.querySelector('#mobileCartBackdrop');
 
   const cart=new Map();
   let timer,customerTimer;
 
   const money=n=>'TZS '+Number(n||0).toLocaleString('en-TZ',{maximumFractionDigits:2});
-  const notify=(text,type='success')=>window.MediTillToast?.(text,type);
+  const notify=(text,type='success',duration=3500)=>window.MediTillToast?.(text,type,duration);
   const esc=value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
 
   function cartTotal(){
@@ -84,7 +89,10 @@
 
     subtotalEl.textContent=money(total);
     totalEl.textContent=money(total);
-    countEl.textContent=`${Number(count.toFixed(4))} items`;
+    const itemLabel=Number(count.toFixed(4))===1?'1 item':`${Number(count.toFixed(4))} items`;
+    countEl.textContent=itemLabel;
+    if(mobileCartCount)mobileCartCount.textContent=itemLabel;
+    if(mobileCartTotal)mobileCartTotal.textContent=money(total);
     payAmount.value=total||'';
     updateChange();
   }
@@ -123,6 +131,12 @@
     }
 
     renderCart();
+    notify((item.name+(item.strength?' '+item.strength:''))+' added to cart','success',1400);
+    if(mobileCartBar){
+      mobileCartBar.classList.remove('is-pulse');
+      void mobileCartBar.offsetWidth;
+      mobileCartBar.classList.add('is-pulse');
+    }
     input.value='';
     input.focus();
   }
@@ -274,6 +288,7 @@
       document.querySelector('#saleSuccessChange').textContent='Change: '+money(data.change_amount);
       document.querySelector('#saleReceiptLink').href='/sales/'+data.id+'/receipt';
       document.querySelector('#saleSuccess').hidden=false;
+      closeMobileCart();
 
       cart.clear();
       renderCart();
@@ -297,6 +312,25 @@
 
   document.querySelector('#saleDone')?.addEventListener('click',dismissSaleSuccess);
   document.querySelector('#saleSuccessClose')?.addEventListener('click',dismissSaleSuccess);
+
+  function openMobileCart(){
+    document.body.classList.add('mt-pos-cart-open');
+    if(mobileCartBackdrop)mobileCartBackdrop.hidden=false;
+    setTimeout(()=>customerSearch?.focus(),180);
+  }
+
+  function closeMobileCart(){
+    document.body.classList.remove('mt-pos-cart-open');
+    if(mobileCartBackdrop)mobileCartBackdrop.hidden=true;
+    input?.focus();
+  }
+
+  mobileCartBar?.addEventListener('click',openMobileCart);
+  mobileCartClose?.addEventListener('click',closeMobileCart);
+  mobileCartBackdrop?.addEventListener('click',closeMobileCart);
+  document.addEventListener('keydown',event=>{
+    if(event.key==='Escape'&&document.body.classList.contains('mt-pos-cart-open'))closeMobileCart();
+  });
 
   document.addEventListener('click',event=>{
     if(!customerSearch?.parentElement.contains(event.target))customerResults?.classList.remove('is-open');
