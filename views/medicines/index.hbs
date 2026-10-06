@@ -5,16 +5,16 @@
   </div>
 
   <div class="mt-toolbar">
-    <form class="mt-search-form" method="get" data-debounce-search="350">
+    <form class="mt-search-form" method="get" data-debounce-search="350" data-ajax-filter data-ajax-target="medicines">
       <span class="mt-search-icon">⌕</span>
       <input name="q" value="{{q}}" placeholder="Search medicine, generic, brand, SKU or barcode">
-      {{#if q}}<a href="/medicines" class="mt-search-clear">×</a>{{/if}}
+      {{#if q}}<a href="/medicines" class="mt-search-clear" data-ajax-target="medicines">×</a>{{/if}}
       <button class="mt-btn mt-btn-primary">Search</button>
     </form>
     <span class="mt-toolbar-meta">25 medicines per page</span>
   </div>
 
-  <article class="mt-panel mt-panel-flush">
+  <article class="mt-panel mt-panel-flush" data-ajax-results="medicines">
     <div class="mt-table-wrap">
       <table class="mt-table mt-medicine-table">
         <thead><tr><th>Medicine</th><th>Category</th><th>Barcode</th><th>Stock</th><th>Price</th><th>Status</th><th></th></tr></thead>
