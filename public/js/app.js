@@ -48,19 +48,22 @@
     if(option) branchSelect.value=option.value;
   }
 
-  document.querySelectorAll('.mt-table:not(.mt-table-scroll-mobile)').forEach(table=>{
-    const headers=[...table.querySelectorAll('thead th')].map(th=>th.textContent.trim());
-    table.classList.add('mt-mobile-cards');
-    table.closest('.mt-table-wrap')?.classList.add('mt-card-table-wrap');
-    table.querySelectorAll('tbody tr').forEach(row=>{
-      [...row.children].forEach((cell,index)=>{
-        if(cell.hasAttribute('colspan')){cell.classList.add('mt-mobile-full');return;}
-        const label=headers[index];
-        if(label) cell.dataset.label=label;
+  function decorateTables(root=document){
+    root.querySelectorAll('.mt-table:not(.mt-table-scroll-mobile)').forEach(table=>{
+      const headers=[...table.querySelectorAll('thead th')].map(th=>th.textContent.trim());
+      table.classList.add('mt-mobile-cards');
+      table.closest('.mt-table-wrap')?.classList.add('mt-card-table-wrap');
+      table.querySelectorAll('tbody tr').forEach(row=>{
+        [...row.children].forEach((cell,index)=>{
+          if(cell.hasAttribute('colspan')){cell.classList.add('mt-mobile-full');return;}
+          const label=headers[index];
+          if(label) cell.dataset.label=label;
+        });
       });
     });
-  });
-  document.querySelectorAll('.mt-table-scroll-mobile').forEach(table=>table.closest('.mt-table-wrap')?.classList.add('mt-scroll-table-wrap'));
+    root.querySelectorAll('.mt-table-scroll-mobile').forEach(table=>table.closest('.mt-table-wrap')?.classList.add('mt-scroll-table-wrap'));
+  }
+  decorateTables();
 
   let confirmResolver=null;
   const modal=document.getElementById('confirmModal');
@@ -83,33 +86,161 @@
   document.getElementById('confirmCancel')?.addEventListener('click',()=>resolveConfirm(false));
   document.getElementById('confirmAccept')?.addEventListener('click',()=>resolveConfirm(true));
 
-  document.querySelectorAll('form[data-confirm-form]').forEach(form=>{
-    form.addEventListener('submit',async event=>{
-      event.preventDefault();
-      const ok=await window.MediTillConfirm({title:form.dataset.confirmTitle||'Confirm action',message:form.dataset.confirmMessage||'Are you sure?'});
-      if(ok) form.submit();
+  document.addEventListener('submit',async event=>{
+    const form=event.target.closest?.('form[data-confirm-form]');
+    if(!form)return;
+    event.preventDefault();
+    const ok=await window.MediTillConfirm({
+      title:form.dataset.confirmTitle||'Confirm action',
+      message:form.dataset.confirmMessage||'Are you sure?'
     });
+    if(ok)form.submit();
   });
 
-  // Debounced GET filters: type, pause briefly, then submit automatically.
-  document.querySelectorAll('form[data-debounce-search]').forEach(form=>{
-    let timer=null;
-    const delay=Math.max(150,Number(form.dataset.debounceSearch)||350);
-    const schedule=()=>{
-      clearTimeout(timer);
-      timer=setTimeout(()=>form.requestSubmit(),delay);
-    };
+  const ajaxControllers=new Map();
+  const debounceTimers=new WeakMap();
 
-    form.querySelectorAll('input[type="text"],input[type="search"],input:not([type])').forEach(input=>{
-      input.addEventListener('input',schedule);
-    });
+  function ajaxFormUrl(form){
+    const url=new URL(form.getAttribute('action')||window.location.pathname,window.location.origin);
+    const params=new URLSearchParams(new FormData(form));
+    url.search=params.toString();
+    return url;
+  }
 
-    form.querySelectorAll('select').forEach(select=>{
-      select.addEventListener('change',()=>{
-        clearTimeout(timer);
-        form.requestSubmit();
+  function ajaxTargetSelector(name){
+    const safe=window.CSS?.escape?CSS.escape(name):String(name).replaceAll('"','\\"');
+    return '[data-ajax-results="'+safe+'"]';
+  }
+
+  async function loadAjaxResults(url,targetName,{push=true}={}){
+    const selector=ajaxTargetSelector(targetName);
+    const current=document.querySelector(selector);
+    if(!current)return;
+
+    ajaxControllers.get(targetName)?.abort();
+    const controller=new AbortController();
+    ajaxControllers.set(targetName,controller);
+
+    const active=document.activeElement;
+    const activeName=current.contains(active)?active?.getAttribute('name'):null;
+    const selectionStart=activeName&&typeof active.selectionStart==='number'?active.selectionStart:null;
+    const selectionEnd=activeName&&typeof active.selectionEnd==='number'?active.selectionEnd:null;
+
+    current.classList.add('is-ajax-loading');
+
+    try{
+      const response=await fetch(url,{
+        headers:{
+          'accept':'text/html',
+          'x-requested-with':'XMLHttpRequest'
+        },
+        signal:controller.signal
       });
-    });
+      if(!response.ok)throw new Error('Could not load filtered results');
+
+      const html=await response.text();
+      const doc=new DOMParser().parseFromString(html,'text/html');
+      const incoming=doc.querySelector(selector);
+      if(!incoming)throw new Error('Filtered results were not found');
+
+      current.replaceWith(incoming);
+      decorateTables(incoming);
+
+      if(activeName){
+        const replacement=incoming.querySelector('[name="'+activeName.replaceAll('"','\\"')+'"]');
+        if(replacement){
+          replacement.focus({preventScroll:true});
+          if(selectionStart!==null&&typeof replacement.setSelectionRange==='function'){
+            replacement.setSelectionRange(selectionStart,selectionEnd);
+          }
+        }
+      }
+
+      if(push){
+        history.pushState({ajaxTarget:targetName},'',url.pathname+url.search);
+      }
+    }catch(error){
+      if(error.name!=='AbortError')showToast(error.message||'Could not load results','error');
+    }finally{
+      if(ajaxControllers.get(targetName)===controller)ajaxControllers.delete(targetName);
+      document.querySelector(selector)?.classList.remove('is-ajax-loading');
+    }
+  }
+
+  document.addEventListener('submit',event=>{
+    const form=event.target.closest?.('form[data-ajax-filter]');
+    if(!form)return;
+    event.preventDefault();
+    const targetName=form.dataset.ajaxTarget;
+    if(!targetName)return;
+    loadAjaxResults(ajaxFormUrl(form),targetName);
+  });
+
+  document.addEventListener('input',event=>{
+    const input=event.target.closest?.('form[data-ajax-filter][data-debounce-search] input');
+    if(!input)return;
+    if(input.type&& !['text','search'].includes(input.type))return;
+
+    const form=input.form;
+    clearTimeout(debounceTimers.get(form));
+    const delay=Math.max(150,Number(form.dataset.debounceSearch)||350);
+    debounceTimers.set(form,setTimeout(()=>form.requestSubmit(),delay));
+  });
+
+  document.addEventListener('change',event=>{
+    const select=event.target.closest?.('form[data-ajax-filter][data-debounce-search] select');
+    if(!select)return;
+    const form=select.form;
+    clearTimeout(debounceTimers.get(form));
+    form.requestSubmit();
+  });
+
+  document.addEventListener('click',event=>{
+    if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+    const link=event.target.closest?.('a.mt-page-link,a.mt-period-chip,a.mt-search-clear');
+    if(!link)return;
+
+    const current=link.closest('[data-ajax-results]');
+    const targetName=link.dataset.ajaxTarget||current?.dataset.ajaxResults;
+    if(!targetName)return;
+
+    const url=new URL(link.href,window.location.origin);
+    if(url.origin!==window.location.origin)return;
+
+    event.preventDefault();
+    loadAjaxResults(url,targetName);
+  });
+
+  window.addEventListener('popstate',()=>{
+    const targetName=history.state?.ajaxTarget;
+    if(targetName)loadAjaxResults(new URL(window.location.href),targetName,{push:false});
+  });
+
+  document.addEventListener('change',async event=>{
+    const select=event.target.closest?.('.batch-status');
+    if(!select)return;
+    if(!select.value)return;
+
+    const ok=await window.MediTillConfirm({title:'Change batch status?',message:'This affects whether the batch can be sold.'});
+    if(!ok){select.value='';return;}
+
+    try{
+      const response=await fetch('/inventory/batches/'+select.dataset.batch+'/status',{
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body:JSON.stringify({status:select.value})
+      });
+      const data=await response.json();
+      if(!response.ok)throw new Error(data.error||'Failed to update batch status');
+      showToast('Batch status updated.','success');
+      const container=select.closest('[data-ajax-results]');
+      if(container){
+        await loadAjaxResults(new URL(window.location.href),container.dataset.ajaxResults,{push:false});
+      }
+    }catch(error){
+      showToast(error.message||'Failed to update batch status','error');
+      select.value='';
+    }
   });
 
   document.querySelectorAll('[data-password-toggle]').forEach(toggle=>{
