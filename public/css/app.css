@@ -813,3 +813,50 @@ button.mt-status{cursor:pointer}
 
 /* Compact contact tables avoid unnecessary desktop horizontal scrolling. */
 .mt-table-compact{min-width:620px}
+
+
+/* =========================================================
+   POS focus mode + access-control UX
+   ========================================================= */
+.mt-topbar-logout{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:8px 11px;border:1px solid #fecaca;border-radius:9px;color:var(--mt-danger);background:#fff;text-decoration:none;font-size:11px;font-weight:800}
+.mt-topbar-logout:hover{background:#fff5f5}
+
+.mt-pos-body{margin:0;min-height:100vh;background:#eef3f6;color:var(--mt-text);overflow:hidden}
+.mt-pos-appbar{height:66px;padding:0 16px;background:#fff;border-bottom:1px solid var(--mt-border);display:flex;align-items:center;justify-content:space-between;gap:14px;box-shadow:0 2px 10px rgba(15,23,42,.04)}
+.mt-pos-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--mt-text);min-width:0}
+.mt-pos-brand>span:last-child{display:grid;line-height:1.15}.mt-pos-brand strong{font-size:14px}.mt-pos-brand small{font-size:10px;color:var(--mt-muted);margin-top:2px}
+.mt-pos-appbar-session{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:700;color:#475569}
+.mt-pos-appbar-actions{display:flex;align-items:center;gap:8px}
+.mt-pos-shell{height:calc(100vh - 66px);padding:12px;max-width:none;margin:0}
+.mt-pos-fullscreen{height:100%;min-height:0;display:block}
+.mt-pos-fullscreen .mt-pos-grid{height:100%;min-height:0}
+.mt-pos-fullscreen .mt-pos-catalog,.mt-pos-fullscreen .mt-pos-cart{height:100%;min-height:0}
+.mt-pos-fullscreen .mt-product-grid{max-height:calc(100vh - 150px);overflow-y:auto}
+.mt-pos-change-preview{display:flex;align-items:center;justify-content:space-between;padding:9px 10px;border-radius:9px;background:#f8fafc;border:1px solid var(--mt-border)}
+.mt-pos-change-preview span{font-size:10px;color:var(--mt-muted);font-weight:700}.mt-pos-change-preview strong{font-size:15px;color:var(--mt-primary-dark)}
+.mt-sale-success-card{position:relative}
+.mt-sale-success-close{position:absolute;right:12px;top:10px;width:34px;height:34px;border:0;border-radius:50%;background:#f1f5f9;color:#475569;font-size:22px;line-height:1;cursor:pointer}
+.mt-sale-success-close:hover{background:#e2e8f0}
+.mt-sale-row-refunded{background:#fff7f7!important}
+.mt-sale-row-partial{background:#fffaf0!important}
+.mt-fieldset{border:1px solid var(--mt-border);border-radius:10px;padding:12px;margin:0}
+.mt-fieldset legend{float:none;width:auto;padding:0 4px;margin:0;font-size:11px;font-weight:800;color:#475569}
+.mt-fieldset>small{display:block;color:var(--mt-muted);font-size:9px;margin:2px 0 10px}
+.mt-branch-check-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+
+@media(max-width:900px){
+  .mt-pos-body{overflow:auto}
+  .mt-pos-appbar{height:auto;min-height:64px;align-items:flex-start;padding:10px;flex-wrap:wrap}
+  .mt-pos-appbar-session{order:3;width:100%;justify-content:space-between}
+  .mt-pos-appbar-actions{margin-left:auto}
+  .mt-pos-shell{height:auto;min-height:calc(100vh - 90px);padding:8px}
+  .mt-pos-fullscreen .mt-pos-grid{height:auto}
+  .mt-pos-fullscreen .mt-pos-catalog,.mt-pos-fullscreen .mt-pos-cart{height:auto}
+  .mt-pos-fullscreen .mt-product-grid{max-height:none}
+}
+@media(max-width:620px){
+  .mt-pos-brand strong{font-size:12px}
+  .mt-pos-appbar-actions .mt-btn{padding:7px 9px;font-size:9px;min-height:36px}
+  .mt-branch-check-grid{grid-template-columns:1fr}
+  .mt-topbar-logout{display:none}
+}
