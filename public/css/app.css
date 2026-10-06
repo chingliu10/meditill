@@ -1160,3 +1160,38 @@ button.mt-status{cursor:pointer}
   .mt-pagination{width:100%}
   .mt-page-number{display:none}
 }
+
+
+/* Shared list filters */
+.mt-sales-search select{
+  min-height:38px;
+  border:1px solid var(--mt-border);
+  border-radius:9px;
+  background:#fff;
+  color:#475569;
+  padding:8px 30px 8px 10px;
+  outline:none;
+  font-size:11px;
+  font-weight:650;
+}
+.mt-sales-search select:focus{
+  border-color:#8ccbc5;
+  box-shadow:0 0 0 3px rgba(15,127,118,.08);
+}
+.mt-expense-filter{min-width:min(100%,560px)}
+
+@media(max-width:760px){
+  .mt-sales-search.mt-expense-filter{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    width:100%;
+  }
+  .mt-sales-search.mt-expense-filter input{
+    grid-column:1/-1;
+  }
+  .mt-sales-search.mt-expense-filter select{
+    min-height:44px;
+    font-size:16px;
+    min-width:0;
+  }
+}
