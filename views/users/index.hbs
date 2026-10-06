@@ -29,9 +29,12 @@
                 {{/if}}
               </td>
               <td>
-                <button class="mt-btn mt-btn-xs user-active {{#if active}}mt-btn-ghost-danger{{else}}mt-btn-ghost-success{{/if}}" data-id="{{id}}" data-active="{{active}}">
-                  {{#if active}}Disable user{{else}}Enable user{{/if}}
-                </button>
+                <div class="mt-row-actions">
+                  <a class="mt-btn mt-btn-xs mt-btn-secondary" href="/users/{{id}}/edit">Edit</a>
+                  <button class="mt-btn mt-btn-xs user-active {{#if active}}mt-btn-ghost-danger{{else}}mt-btn-ghost-success{{/if}}" data-id="{{id}}" data-active="{{active}}">
+                    {{#if active}}Disable user{{else}}Enable user{{/if}}
+                  </button>
+                </div>
               </td>
             </tr>
             {{/each}}
