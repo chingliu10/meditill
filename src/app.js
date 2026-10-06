@@ -25,7 +25,29 @@ app.engine('hbs', engine({
     stockClass(stock,reorder){const q=Number(stock||0),r=Number(reorder||0);if(q<=0)return 'danger';if(q<=r)return 'warning';return 'success';},
     stockLabel(stock,reorder){const q=Number(stock||0),r=Number(reorder||0);if(q<=0)return 'Out of stock';if(q<=r)return 'Low stock';return 'In stock';},
     json(value){return JSON.stringify(value);},
-    eq(a,b){return a===b;}
+    eq(a,b){return a===b;},
+    can(user,code){
+      if(!user)return false;
+      if(user.is_owner===true||(Array.isArray(user.roles)&&user.roles.includes('OWNER')))return true;
+      return Array.isArray(user.permissions)&&user.permissions.includes(code);
+    },
+    canAny(user,...args){
+      args.pop();
+      if(!user)return false;
+      if(user.is_owner===true||(Array.isArray(user.roles)&&user.roles.includes('OWNER')))return true;
+      const permissions=Array.isArray(user.permissions)?user.permissions:[];
+      return args.some(code=>permissions.includes(code));
+    },
+    reportHome(user){
+      if(!user)return '/';
+      if(user.is_owner===true||(Array.isArray(user.roles)&&user.roles.includes('OWNER')))return '/reports/sales';
+      const permissions=Array.isArray(user.permissions)?user.permissions:[];
+      if(permissions.includes('reports.sales')&&permissions.includes('reports.profit'))return '/reports/sales';
+      if(permissions.includes('reports.profit'))return '/reports/profit-loss';
+      if(permissions.includes('reports.inventory'))return '/reports/inventory';
+      if(permissions.includes('reports.purchases'))return '/reports/purchases';
+      return '/';
+    }
   }
 }));
 app.set('view engine','hbs');
