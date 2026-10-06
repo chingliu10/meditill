@@ -5,9 +5,9 @@
 
   <div class="mt-sales-filterbar">
     <div class="mt-period-strip" aria-label="Expense period">
-      {{#each periods}}<a href="{{url}}" class="mt-period-chip {{#if active}}is-active{{/if}}">{{label}}</a>{{/each}}
+      {{#each periods}}<a href="{{url}}" class="mt-period-chip {{#if active}}is-active{{/if}}" data-ajax-target="expenses">{{label}}</a>{{/each}}
     </div>
-    <form class="mt-sales-search mt-expense-filter" method="get" data-debounce-search="350">
+    <form class="mt-sales-search mt-expense-filter" method="get" data-debounce-search="350" data-ajax-filter data-ajax-target="expenses">
       <input type="hidden" name="period" value="{{period}}">
       <input name="q" value="{{q}}" placeholder="Search category or description">
       <select name="method">
@@ -18,7 +18,7 @@
   </div>
 
   <div class="mt-two-column">
-    <article class="mt-panel">
+    <article class="mt-panel" data-ajax-results="expenses">
       <div class="mt-panel-header"><div><h2>Expense history</h2><p>25 expenses per page</p></div></div>
       <div class="mt-table-wrap">
         <table class="mt-table">
