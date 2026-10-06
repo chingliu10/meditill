@@ -26,6 +26,10 @@ async function seed(){
   const started=Date.now();
 
   try{
+    const databaseName=(await client.query('SELECT current_database() AS name')).rows[0]?.name;
+    if(databaseName!=='meditill_perf'&&process.env.ALLOW_PERF_ON_SHARED_DB!=='1'){
+      throw new Error(`Refusing to seed performance data into database "${databaseName}". Point DATABASE_URL to meditill_perf first.`);
+    }
     await client.query('BEGIN');
 
     const existingOrg=await client.query('SELECT id FROM organizations WHERE name=$1 LIMIT 1',[ORG_NAME]);
