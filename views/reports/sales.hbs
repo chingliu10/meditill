@@ -11,16 +11,14 @@
     <div>
       <p class="mt-eyebrow">REPORTS</p>
       <h1>Sales &amp; profit</h1>
-      <p>Net revenue and historical batch cost for the selected period.</p>
+      <p>Net revenue and historical batch cost for a bounded reporting period.</p>
     </div>
   </div>
 
-  <div class="mt-toolbar">
-    <form class="mt-filter-form">
-      <label>From<input type="date" name="from" value="{{from}}"></label>
-      <label>To<input type="date" name="to" value="{{to}}"></label>
-      <button class="mt-btn mt-btn-primary">Apply</button>
-    </form>
+  <div class="mt-sales-filterbar">
+    <div class="mt-period-strip" aria-label="Sales report period">
+      {{#each periods}}<a href="{{url}}" class="mt-period-chip {{#if active}}is-active{{/if}}">{{label}}</a>{{/each}}
+    </div>
   </div>
 
   <div class="mt-metric-grid">
