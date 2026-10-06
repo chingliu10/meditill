@@ -8,43 +8,78 @@ async function businessClock(db,branchId){
   return rows[0]||{timezone:'Africa/Dar_es_Salaam',business_date:null};
 }
 
-async function salesSummary(db,branchId,from,to,timezone='Africa/Dar_es_Salaam'){
+async function salesSummary(db,branchId,startDate,endDate,timezone='Africa/Dar_es_Salaam'){
   const {rows}=await db.query(
     `WITH filtered_sales AS (
-      SELECT s.id,s.total,COALESCE((SELECT SUM(sr.total_refund) FROM sale_returns sr WHERE sr.sale_id=s.id),0) refunds
-      FROM sales s WHERE s.branch_id=$1 AND s.status IN('COMPLETED','PARTIALLY_REFUNDED','REFUNDED')
-        AND (s.created_at AT TIME ZONE $4)::date >= $2::date
-        AND (s.created_at AT TIME ZONE $4)::date <= $3::date
+      SELECT s.id,s.total
+      FROM sales s
+      WHERE s.branch_id=$1
+        AND s.status IN('COMPLETED','PARTIALLY_REFUNDED','REFUNDED')
+        AND s.created_at >= ($2::date::timestamp AT TIME ZONE $4)
+        AND s.created_at < ($3::date::timestamp AT TIME ZONE $4)
+    ),
+    refunds AS (
+      SELECT sr.sale_id,SUM(sr.total_refund) refunds
+      FROM sale_returns sr
+      JOIN filtered_sales fs ON fs.id=sr.sale_id
+      GROUP BY sr.sale_id
     ),
     costs AS (
       SELECT si.sale_id,SUM(sib.quantity*sib.unit_cost) cost
-      FROM sale_items si JOIN sale_item_batches sib ON sib.sale_item_id=si.id JOIN filtered_sales fs ON fs.id=si.sale_id GROUP BY si.sale_id
+      FROM sale_items si
+      JOIN filtered_sales fs ON fs.id=si.sale_id
+      JOIN sale_item_batches sib ON sib.sale_item_id=si.id
+      GROUP BY si.sale_id
     ),
     returned_cost AS (
       SELECT sr.sale_id,SUM(sri.quantity*mb.unit_cost) cost
-      FROM sale_returns sr JOIN sale_return_items sri ON sri.sale_return_id=sr.id JOIN medicine_batches mb ON mb.id=sri.batch_id
-      JOIN filtered_sales fs ON fs.id=sr.sale_id GROUP BY sr.sale_id
+      FROM sale_returns sr
+      JOIN filtered_sales fs ON fs.id=sr.sale_id
+      JOIN sale_return_items sri ON sri.sale_return_id=sr.id
+      JOIN medicine_batches mb ON mb.id=sri.batch_id
+      GROUP BY sr.sale_id
     )
     SELECT COUNT(fs.id)::int transactions,
-      COALESCE(SUM(fs.total-fs.refunds),0) revenue,
+      COALESCE(SUM(fs.total-COALESCE(r.refunds,0)),0) revenue,
       COALESCE(SUM(COALESCE(c.cost,0)-COALESCE(rc.cost,0)),0) cost,
-      COALESCE(SUM(fs.total-fs.refunds)-SUM(COALESCE(c.cost,0)-COALESCE(rc.cost,0)),0) gross_profit
-    FROM filtered_sales fs LEFT JOIN costs c ON c.sale_id=fs.id LEFT JOIN returned_cost rc ON rc.sale_id=fs.id`,
-    [branchId,from,to,timezone]
+      COALESCE(
+        SUM(fs.total-COALESCE(r.refunds,0))
+        - SUM(COALESCE(c.cost,0)-COALESCE(rc.cost,0)),
+        0
+      ) gross_profit
+    FROM filtered_sales fs
+    LEFT JOIN refunds r ON r.sale_id=fs.id
+    LEFT JOIN costs c ON c.sale_id=fs.id
+    LEFT JOIN returned_cost rc ON rc.sale_id=fs.id`,
+    [branchId,startDate,endDate,timezone]
   );
   return rows[0];
 }
 
-async function daily(db,branchId,from,to,timezone='Africa/Dar_es_Salaam'){
+async function daily(db,branchId,startDate,endDate,timezone='Africa/Dar_es_Salaam'){
   const {rows}=await db.query(
-    `SELECT (s.created_at AT TIME ZONE $4)::date sale_date,COUNT(*)::int transactions,
-      COALESCE(SUM(s.total-COALESCE((SELECT SUM(sr.total_refund) FROM sale_returns sr WHERE sr.sale_id=s.id),0)),0) revenue
-     FROM sales s
-     WHERE s.branch_id=$1 AND s.status IN('COMPLETED','PARTIALLY_REFUNDED','REFUNDED')
-       AND (s.created_at AT TIME ZONE $4)::date >= $2::date
-       AND (s.created_at AT TIME ZONE $4)::date <= $3::date
-     GROUP BY (s.created_at AT TIME ZONE $4)::date ORDER BY sale_date DESC`,
-    [branchId,from,to,timezone]
+    `WITH filtered_sales AS (
+      SELECT s.id,s.total,s.created_at
+      FROM sales s
+      WHERE s.branch_id=$1
+        AND s.status IN('COMPLETED','PARTIALLY_REFUNDED','REFUNDED')
+        AND s.created_at >= ($2::date::timestamp AT TIME ZONE $4)
+        AND s.created_at < ($3::date::timestamp AT TIME ZONE $4)
+    ),
+    refunds AS (
+      SELECT sr.sale_id,SUM(sr.total_refund) refunds
+      FROM sale_returns sr
+      JOIN filtered_sales fs ON fs.id=sr.sale_id
+      GROUP BY sr.sale_id
+    )
+    SELECT (fs.created_at AT TIME ZONE $4)::date sale_date,
+      COUNT(*)::int transactions,
+      COALESCE(SUM(fs.total-COALESCE(r.refunds,0)),0) revenue
+    FROM filtered_sales fs
+    LEFT JOIN refunds r ON r.sale_id=fs.id
+    GROUP BY (fs.created_at AT TIME ZONE $4)::date
+    ORDER BY sale_date DESC`,
+    [branchId,startDate,endDate,timezone]
   );
   return rows;
 }
