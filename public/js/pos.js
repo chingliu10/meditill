@@ -19,6 +19,8 @@
 
   const cart=new Map();
   let timer,customerTimer;
+  let productSearchController=null;
+  let customerSearchController=null;
 
   const money=n=>'TZS '+Number(n||0).toLocaleString('en-TZ',{maximumFractionDigits:2});
   const notify=(text,type='success',duration=3500)=>window.MediTillToast?.(text,type,duration);
@@ -135,11 +137,6 @@
 
     renderCart();
     notify((item.name+(item.strength?' '+item.strength:''))+' added to cart','success',1400);
-    if(mobileCartBar){
-      mobileCartBar.classList.remove('is-pulse');
-      void mobileCartBar.offsetWidth;
-      mobileCartBar.classList.add('is-pulse');
-    }
     input.value='';
     focusSearch();
   }
@@ -165,7 +162,12 @@
   }
 
   async function search(query){
-    const response=await fetch('/pos/api/search?q='+encodeURIComponent(query));
+    productSearchController?.abort();
+    productSearchController=new AbortController();
+
+    const response=await fetch('/pos/api/search?q='+encodeURIComponent(query),{
+      signal:productSearchController.signal
+    });
     const data=await response.json();
     if(!response.ok)throw new Error(data.error||'Search failed');
     showProducts(data);
@@ -200,7 +202,7 @@
 
   input?.addEventListener('input',()=>{
     clearTimeout(timer);
-    timer=setTimeout(()=>search(input.value).catch(error=>notify(error.message,'error')),220);
+    timer=setTimeout(()=>search(input.value).catch(error=>{if(error.name!=='AbortError')notify(error.message,'error');}),350);
   });
 
   document.querySelectorAll('[data-method]').forEach(button=>{
@@ -218,7 +220,12 @@
     clearTimeout(customerTimer);
 
     customerTimer=setTimeout(async()=>{
-      const response=await fetch('/customers/api/search?q='+encodeURIComponent(customerSearch.value));
+      customerSearchController?.abort();
+      customerSearchController=new AbortController();
+
+      const response=await fetch('/customers/api/search?q='+encodeURIComponent(customerSearch.value),{
+        signal:customerSearchController.signal
+      });
       const list=await response.json();
       customerResults.innerHTML='';
 
@@ -227,7 +234,7 @@
         return;
       }
 
-      list.slice(0,12).forEach(customer=>{
+      list.slice(0,25).forEach(customer=>{
         const button=document.createElement('button');
         button.type='button';
         button.className='mt-picker-item';
@@ -241,7 +248,7 @@
       });
 
       customerResults.classList.add('is-open');
-    },200);
+    },350);
   });
 
   let saleInFlight=false;
