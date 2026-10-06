@@ -1,11 +1,163 @@
-async function registers(db,branchId){const {rows}=await db.query('SELECT id,name,active FROM registers WHERE branch_id=$1 ORDER BY active DESC,name',[branchId]);return rows;}
-async function createRegister(db,branchId,name){const {rows}=await db.query('INSERT INTO registers(branch_id,name) VALUES($1,$2) RETURNING *',[branchId,name]);return rows[0];}
-async function findRegister(db,registerId,branchId){const {rows}=await db.query(`SELECT id,name,branch_id FROM registers WHERE id=$1 AND branch_id=$2 AND active=true LIMIT 1`,[registerId,branchId]);return rows[0]||null;}
-async function openSession(db,registerId,branchId,userId,openingCash){const {rows}=await db.query(`INSERT INTO register_sessions(register_id,branch_id,user_id,opening_cash) VALUES($1,$2,$3,$4) RETURNING *`,[registerId,branchId,userId,openingCash]);await db.query(`INSERT INTO register_movements(register_session_id,movement_type,amount,performed_by) VALUES($1,'OPENING',$2,$3)`,[rows[0].id,openingCash,userId]);return rows[0];}
-async function current(db,userId,branchId=null){const {rows}=await db.query(`SELECT rs.*,r.name register_name,b.name branch_name FROM register_sessions rs JOIN registers r ON r.id=rs.register_id JOIN branches b ON b.id=rs.branch_id WHERE rs.user_id=$1 AND rs.status='OPEN' AND ($2::bigint IS NULL OR rs.branch_id=$2) ORDER BY rs.opened_at DESC LIMIT 1`,[userId,branchId]);return rows[0]||null;}
-async function currentForUpdate(db,userId,branchId){const {rows}=await db.query(`SELECT rs.*,r.name register_name,b.name branch_name FROM register_sessions rs JOIN registers r ON r.id=rs.register_id JOIN branches b ON b.id=rs.branch_id WHERE rs.user_id=$1 AND rs.branch_id=$2 AND rs.status='OPEN' ORDER BY rs.opened_at DESC LIMIT 1 FOR UPDATE OF rs`,[userId,branchId]);return rows[0]||null;}
-async function currentRegister(db,registerId){const {rows}=await db.query(`SELECT rs.id,rs.user_id,rs.branch_id,u.name user_name FROM register_sessions rs JOIN users u ON u.id=rs.user_id WHERE rs.register_id=$1 AND rs.status='OPEN' LIMIT 1`,[registerId]);return rows[0]||null;}
-async function expectedCash(db,sessionId){const {rows}=await db.query(`SELECT COALESCE(sum(CASE WHEN movement_type IN('OPENING','CASH_SALE','CASH_IN') THEN amount WHEN movement_type IN('CASH_REFUND','CASH_OUT','EXPENSE') THEN -amount ELSE 0 END),0)::numeric expected FROM register_movements WHERE register_session_id=$1`,[sessionId]);return Number(rows[0].expected||0);}
-async function close(db,sessionId,actual,expected){const difference=Number((actual-expected).toFixed(2));const {rows}=await db.query(`UPDATE register_sessions SET status='CLOSED',closed_at=now(),expected_cash=$2,actual_cash=$3,difference=$4 WHERE id=$1 AND status='OPEN' RETURNING *`,[sessionId,expected,actual,difference]);return rows[0]||null;}
-async function latestClosed(db,userId,branchId){const {rows}=await db.query(`SELECT rs.*,r.name register_name FROM register_sessions rs JOIN registers r ON r.id=rs.register_id WHERE rs.user_id=$1 AND rs.branch_id=$2 AND rs.status='CLOSED' ORDER BY rs.closed_at DESC NULLS LAST LIMIT 1`,[userId,branchId]);return rows[0]||null;}
-module.exports={registers,createRegister,findRegister,openSession,current,currentForUpdate,currentRegister,expectedCash,close,latestClosed};
+async function registers(db,branchId){
+  const {rows}=await db.query(
+    `SELECT
+       r.id,
+       r.name,
+       r.active,
+       rs.id AS open_session_id,
+       rs.user_id AS open_user_id,
+       u.name AS open_user_name
+     FROM registers r
+     LEFT JOIN register_sessions rs
+       ON rs.register_id=r.id
+      AND rs.status='OPEN'
+     LEFT JOIN users u ON u.id=rs.user_id
+     WHERE r.branch_id=$1
+     ORDER BY r.active DESC,r.name`,
+    [branchId]
+  );
+  return rows.map(row=>({
+    ...row,
+    available:row.active===true&&!row.open_session_id
+  }));
+}
+
+async function createRegister(db,branchId,name){
+  const {rows}=await db.query(
+    'INSERT INTO registers(branch_id,name) VALUES($1,$2) RETURNING *',
+    [branchId,name]
+  );
+  return rows[0];
+}
+
+async function findRegister(db,registerId,branchId){
+  const {rows}=await db.query(
+    `SELECT id,name,branch_id
+     FROM registers
+     WHERE id=$1 AND branch_id=$2 AND active=true
+     LIMIT 1`,
+    [registerId,branchId]
+  );
+  return rows[0]||null;
+}
+
+async function openSession(db,registerId,branchId,userId,openingCash){
+  const {rows}=await db.query(
+    `INSERT INTO register_sessions(register_id,branch_id,user_id,opening_cash)
+     VALUES($1,$2,$3,$4)
+     RETURNING *`,
+    [registerId,branchId,userId,openingCash]
+  );
+  await db.query(
+    `INSERT INTO register_movements(register_session_id,movement_type,amount,performed_by)
+     VALUES($1,'OPENING',$2,$3)`,
+    [rows[0].id,openingCash,userId]
+  );
+  return rows[0];
+}
+
+async function current(db,userId,branchId=null){
+  const {rows}=await db.query(
+    `SELECT rs.*,r.name register_name,b.name branch_name
+     FROM register_sessions rs
+     JOIN registers r ON r.id=rs.register_id
+     JOIN branches b ON b.id=rs.branch_id
+     WHERE rs.user_id=$1
+       AND rs.status='OPEN'
+       AND ($2::bigint IS NULL OR rs.branch_id=$2)
+     ORDER BY rs.opened_at DESC
+     LIMIT 1`,
+    [userId,branchId]
+  );
+  return rows[0]||null;
+}
+
+async function currentForUpdate(db,userId,branchId){
+  const {rows}=await db.query(
+    `SELECT rs.*,r.name register_name,b.name branch_name
+     FROM register_sessions rs
+     JOIN registers r ON r.id=rs.register_id
+     JOIN branches b ON b.id=rs.branch_id
+     WHERE rs.user_id=$1
+       AND rs.branch_id=$2
+       AND rs.status='OPEN'
+     ORDER BY rs.opened_at DESC
+     LIMIT 1
+     FOR UPDATE OF rs`,
+    [userId,branchId]
+  );
+  return rows[0]||null;
+}
+
+async function currentRegister(db,registerId){
+  const {rows}=await db.query(
+    `SELECT rs.id,rs.user_id,rs.branch_id,u.name user_name
+     FROM register_sessions rs
+     JOIN users u ON u.id=rs.user_id
+     WHERE rs.register_id=$1
+       AND rs.status='OPEN'
+     LIMIT 1`,
+    [registerId]
+  );
+  return rows[0]||null;
+}
+
+async function expectedCash(db,sessionId){
+  const {rows}=await db.query(
+    `SELECT COALESCE(sum(
+       CASE
+         WHEN movement_type IN('OPENING','CASH_SALE','CASH_IN') THEN amount
+         WHEN movement_type IN('CASH_REFUND','CASH_OUT','EXPENSE') THEN -amount
+         ELSE 0
+       END
+     ),0)::numeric expected
+     FROM register_movements
+     WHERE register_session_id=$1`,
+    [sessionId]
+  );
+  return Number(rows[0].expected||0);
+}
+
+async function close(db,sessionId,actual,expected){
+  const difference=Number((actual-expected).toFixed(2));
+  const {rows}=await db.query(
+    `UPDATE register_sessions
+     SET status='CLOSED',
+         closed_at=now(),
+         expected_cash=$2,
+         actual_cash=$3,
+         difference=$4
+     WHERE id=$1 AND status='OPEN'
+     RETURNING *`,
+    [sessionId,expected,actual,difference]
+  );
+  return rows[0]||null;
+}
+
+async function latestClosed(db,userId,branchId){
+  const {rows}=await db.query(
+    `SELECT rs.*,r.name register_name
+     FROM register_sessions rs
+     JOIN registers r ON r.id=rs.register_id
+     WHERE rs.user_id=$1
+       AND rs.branch_id=$2
+       AND rs.status='CLOSED'
+     ORDER BY rs.closed_at DESC NULLS LAST
+     LIMIT 1`,
+    [userId,branchId]
+  );
+  return rows[0]||null;
+}
+
+module.exports={
+  registers,
+  createRegister,
+  findRegister,
+  openSession,
+  current,
+  currentForUpdate,
+  currentRegister,
+  expectedCash,
+  close,
+  latestClosed
+};
