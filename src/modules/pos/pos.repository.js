@@ -1,5 +1,58 @@
 async function openRegister(db,userId,branchId){const {rows}=await db.query(`SELECT rs.*,r.name register_name FROM register_sessions rs JOIN registers r ON r.id=rs.register_id WHERE rs.user_id=$1 AND rs.branch_id=$2 AND rs.status='OPEN' LIMIT 1`,[userId,branchId]);return rows[0]||null;}
-async function search(db,organizationId,branchId,q){const term=`%${String(q||'').trim()}%`;const {rows}=await db.query(`SELECT m.id,m.name,m.generic_name,m.brand_name,m.strength,m.default_selling_price,m.image_path,c.name category,u.name unit_name,u.symbol unit,COALESCE(u.allow_fraction,false) allow_fraction,1::numeric conversion_to_base,NULL::bigint medicine_unit_id,NULL::varchar sale_unit_name,NULL::numeric sale_unit_price,COALESCE(sum(b.quantity_available) FILTER(WHERE b.status='SALEABLE' AND b.quantity_available>0 AND (b.expiry_date IS NULL OR b.expiry_date>=current_date)),0) stock FROM medicines m LEFT JOIN categories c ON c.id=m.category_id LEFT JOIN units u ON u.id=m.base_unit_id LEFT JOIN medicine_batches b ON b.medicine_id=m.id AND b.branch_id=$2 WHERE m.organization_id=$1 AND m.active=true AND ($3='' OR m.name ILIKE $4 OR COALESCE(m.generic_name,'') ILIKE $4 OR COALESCE(m.brand_name,'') ILIKE $4 OR EXISTS(SELECT 1 FROM medicine_barcodes mb WHERE mb.medicine_id=m.id AND mb.barcode ILIKE $4) OR EXISTS(SELECT 1 FROM medicine_units mu WHERE mu.medicine_id=m.id AND mu.active=true AND mu.barcode ILIKE $4)) GROUP BY m.id,c.id,u.id ORDER BY m.name LIMIT 60`,[organizationId,branchId,String(q||'').trim(),term]);return rows;}
+async function search(db,organizationId,branchId,q){
+  const query=String(q||'').trim();
+  const term=`%${query}%`;
+  const prefix=`${query}%`;
+
+  const {rows}=await db.query(
+    `SELECT
+       m.id,m.name,m.generic_name,m.brand_name,m.strength,m.default_selling_price,m.image_path,
+       c.name category,u.name unit_name,u.symbol unit,COALESCE(u.allow_fraction,false) allow_fraction,
+       1::numeric conversion_to_base,NULL::bigint medicine_unit_id,NULL::varchar sale_unit_name,NULL::numeric sale_unit_price,
+       COALESCE(SUM(b.quantity_available) FILTER(
+         WHERE b.status='SALEABLE' AND b.quantity_available>0
+           AND (b.expiry_date IS NULL OR b.expiry_date>=current_date)
+       ),0) stock,
+       CASE
+         WHEN $3='' THEN 50
+         WHEN EXISTS(SELECT 1 FROM medicine_barcodes mb WHERE mb.medicine_id=m.id AND mb.barcode=$3) THEN 0
+         WHEN EXISTS(SELECT 1 FROM medicine_units mu WHERE mu.medicine_id=m.id AND mu.active=true AND mu.barcode=$3) THEN 0
+         WHEN COALESCE(m.sku,'') ILIKE $3 THEN 1
+         WHEN m.name ILIKE $3 THEN 2
+         WHEN COALESCE(m.generic_name,'') ILIKE $3 THEN 3
+         WHEN COALESCE(m.brand_name,'') ILIKE $3 THEN 4
+         WHEN m.name ILIKE $5 THEN 5
+         WHEN COALESCE(m.generic_name,'') ILIKE $5 THEN 6
+         WHEN COALESCE(m.brand_name,'') ILIKE $5 THEN 7
+         ELSE 20
+       END relevance
+     FROM medicines m
+     LEFT JOIN categories c ON c.id=m.category_id
+     LEFT JOIN units u ON u.id=m.base_unit_id
+     LEFT JOIN medicine_batches b ON b.medicine_id=m.id AND b.branch_id=$2
+     WHERE m.organization_id=$1
+       AND m.active=true
+       AND (
+         $3='' OR
+         m.name ILIKE $4 OR
+         COALESCE(m.generic_name,'') ILIKE $4 OR
+         COALESCE(m.brand_name,'') ILIKE $4 OR
+         COALESCE(m.sku,'') ILIKE $4 OR
+         EXISTS(SELECT 1 FROM medicine_barcodes mb WHERE mb.medicine_id=m.id AND mb.barcode ILIKE $4) OR
+         EXISTS(SELECT 1 FROM medicine_units mu WHERE mu.medicine_id=m.id AND mu.active=true AND mu.barcode ILIKE $4)
+       )
+     GROUP BY m.id,c.id,u.id
+     ORDER BY relevance,
+       (COALESCE(SUM(b.quantity_available) FILTER(
+         WHERE b.status='SALEABLE' AND b.quantity_available>0
+           AND (b.expiry_date IS NULL OR b.expiry_date>=current_date)
+       ),0)>0) DESC,
+       m.name
+     LIMIT 25`,
+    [organizationId,branchId,query,term,prefix]
+  );
+  return rows;
+}
 async function lockBatches(db,medicineId,branchId){const {rows}=await db.query(`SELECT id,quantity_available,expiry_date,unit_cost FROM medicine_batches WHERE medicine_id=$1 AND branch_id=$2 AND quantity_available>0 AND status='SALEABLE' AND (expiry_date IS NULL OR expiry_date>=current_date) ORDER BY expiry_date NULLS LAST,received_at,id FOR UPDATE`,[medicineId,branchId]);return rows;}
 async function medicine(db,organizationId,id){const {rows}=await db.query(`SELECT m.id,m.name,m.default_selling_price,u.name unit_name,u.symbol unit,COALESCE(u.allow_fraction,false) allow_fraction FROM medicines m LEFT JOIN units u ON u.id=m.base_unit_id WHERE m.organization_id=$1 AND m.id=$2 AND m.active=true`,[organizationId,id]);return rows[0]||null;}
 async function medicineUnit(db,organizationId,medicineId,id){const {rows}=await db.query(`SELECT mu.id,mu.name,mu.conversion_to_base,mu.selling_price FROM medicine_units mu JOIN medicines m ON m.id=mu.medicine_id WHERE m.organization_id=$1 AND mu.medicine_id=$2 AND mu.id=$3 AND mu.active=true`,[organizationId,medicineId,id]);return rows[0]||null;}
