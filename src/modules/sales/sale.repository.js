@@ -1,3 +1,103 @@
-async function list(db,organizationId,branchId,filters={}){const q=String(filters.q||'').trim(),term=`%${q}%`,from=filters.from||null,to=filters.to||null;const {rows}=await db.query(`SELECT s.id,s.sale_number,s.created_at,s.total,s.amount_paid,s.change_amount,s.status,c.name customer,u.name cashier,COALESCE(string_agg(DISTINCT sp.payment_method,', '),'') payment_methods FROM sales s LEFT JOIN customers c ON c.id=s.customer_id JOIN users u ON u.id=s.user_id LEFT JOIN sale_payments sp ON sp.sale_id=s.id WHERE s.organization_id=$1 AND s.branch_id=$2 AND ($3='' OR s.sale_number ILIKE $4 OR COALESCE(c.name,'') ILIKE $4) AND ($5::date IS NULL OR s.created_at >= $5::date) AND ($6::date IS NULL OR s.created_at < ($6::date+interval '1 day')) GROUP BY s.id,c.name,u.name ORDER BY s.created_at DESC LIMIT 200`,[organizationId,branchId,q,term,from,to]);return rows;}
-async function detail(db,organizationId,branchId,id){const sale=(await db.query(`SELECT s.*,c.name customer,c.phone customer_phone,u.name cashier,b.name branch,b.phone branch_phone,b.address branch_address,o.name organization,o.phone organization_phone,o.address organization_address FROM sales s LEFT JOIN customers c ON c.id=s.customer_id JOIN users u ON u.id=s.user_id JOIN branches b ON b.id=s.branch_id JOIN organizations o ON o.id=s.organization_id WHERE s.organization_id=$1 AND s.branch_id=$2 AND s.id=$3 LIMIT 1`,[organizationId,branchId,id])).rows[0];if(!sale)return null;const items=(await db.query(`SELECT si.id,si.quantity,si.unit_price,si.discount,si.line_total,si.medicine_unit_id,si.sale_unit_name,COALESCE(si.sale_unit_quantity,si.quantity) sale_unit_quantity,COALESCE(si.conversion_to_base,1) conversion_to_base,COALESCE(si.sale_unit_price,si.unit_price) sale_unit_price,m.name,m.strength,m.generic_name,COALESCE((SELECT SUM(sri.quantity) FROM sale_return_items sri WHERE sri.sale_item_id=si.id),0) returned_base_quantity,(COALESCE(si.quantity,0)-COALESCE((SELECT SUM(sri.quantity) FROM sale_return_items sri WHERE sri.sale_item_id=si.id),0))/COALESCE(si.conversion_to_base,1) returnable_sale_quantity,COALESCE(string_agg(DISTINCT mb.batch_number,', ') FILTER(WHERE mb.batch_number IS NOT NULL),'') batches FROM sale_items si JOIN medicines m ON m.id=si.medicine_id LEFT JOIN sale_item_batches sib ON sib.sale_item_id=si.id LEFT JOIN medicine_batches mb ON mb.id=sib.batch_id WHERE si.sale_id=$1 GROUP BY si.id,m.id ORDER BY si.id`,[id])).rows;const payments=(await db.query('SELECT payment_method,amount,reference,created_at FROM sale_payments WHERE sale_id=$1 ORDER BY id',[id])).rows;return {sale,items,payments};}
-module.exports={list,detail};
+async function businessClock(db,branchId){
+  const {rows}=await db.query(
+    `SELECT o.timezone,to_char(now() AT TIME ZONE o.timezone,'YYYY-MM-DD') business_date
+     FROM branches b
+     JOIN organizations o ON o.id=b.organization_id
+     WHERE b.id=$1
+     LIMIT 1`,
+    [branchId]
+  );
+  return rows[0]||{timezone:'Africa/Dar_es_Salaam',business_date:null};
+}
+
+async function list(db,organizationId,branchId,filters={}){
+  const q=String(filters.q||'').trim();
+  const term=`%${q}%`;
+  const startDate=filters.startDate;
+  const endDate=filters.endDate;
+  const timezone=filters.timezone||'Africa/Dar_es_Salaam';
+  const page=Math.max(1,Number(filters.page)||1);
+  const pageSize=Math.min(100,Math.max(1,Number(filters.pageSize)||25));
+  const offset=(page-1)*pageSize;
+
+  const params=[organizationId,branchId,q,term,startDate,endDate,timezone];
+
+  const countResult=await db.query(
+    `SELECT COUNT(*)::int total
+     FROM sales s
+     LEFT JOIN customers c ON c.id=s.customer_id
+     WHERE s.organization_id=$1
+       AND s.branch_id=$2
+       AND ($3='' OR s.sale_number ILIKE $4 OR COALESCE(c.name,'') ILIKE $4)
+       AND s.created_at >= ($5::date::timestamp AT TIME ZONE $7)
+       AND s.created_at < ($6::date::timestamp AT TIME ZONE $7)`,
+    params
+  );
+
+  const total=Number(countResult.rows[0]?.total||0);
+  const {rows}=await db.query(
+    `SELECT
+       s.id,s.sale_number,s.created_at,s.total,s.amount_paid,s.change_amount,s.status,
+       c.name customer,u.name cashier,
+       COALESCE(string_agg(DISTINCT sp.payment_method,', '),'') payment_methods
+     FROM sales s
+     LEFT JOIN customers c ON c.id=s.customer_id
+     JOIN users u ON u.id=s.user_id
+     LEFT JOIN sale_payments sp ON sp.sale_id=s.id
+     WHERE s.organization_id=$1
+       AND s.branch_id=$2
+       AND ($3='' OR s.sale_number ILIKE $4 OR COALESCE(c.name,'') ILIKE $4)
+       AND s.created_at >= ($5::date::timestamp AT TIME ZONE $7)
+       AND s.created_at < ($6::date::timestamp AT TIME ZONE $7)
+     GROUP BY s.id,c.name,u.name
+     ORDER BY s.created_at DESC
+     LIMIT $8 OFFSET $9`,
+    [...params,pageSize,offset]
+  );
+
+  return {rows,total,page,pageSize};
+}
+
+async function detail(db,organizationId,branchId,id){
+  const sale=(await db.query(
+    `SELECT s.*,c.name customer,c.phone customer_phone,u.name cashier,b.name branch,b.phone branch_phone,b.address branch_address,o.name organization,o.phone organization_phone,o.address organization_address
+     FROM sales s
+     LEFT JOIN customers c ON c.id=s.customer_id
+     JOIN users u ON u.id=s.user_id
+     JOIN branches b ON b.id=s.branch_id
+     JOIN organizations o ON o.id=s.organization_id
+     WHERE s.organization_id=$1 AND s.branch_id=$2 AND s.id=$3
+     LIMIT 1`,
+    [organizationId,branchId,id]
+  )).rows[0];
+
+  if(!sale)return null;
+
+  const items=(await db.query(
+    `SELECT si.id,si.quantity,si.unit_price,si.discount,si.line_total,si.medicine_unit_id,si.sale_unit_name,
+       COALESCE(si.sale_unit_quantity,si.quantity) sale_unit_quantity,
+       COALESCE(si.conversion_to_base,1) conversion_to_base,
+       COALESCE(si.sale_unit_price,si.unit_price) sale_unit_price,
+       m.name,m.strength,m.generic_name,
+       COALESCE((SELECT SUM(sri.quantity) FROM sale_return_items sri WHERE sri.sale_item_id=si.id),0) returned_base_quantity,
+       (COALESCE(si.quantity,0)-COALESCE((SELECT SUM(sri.quantity) FROM sale_return_items sri WHERE sri.sale_item_id=si.id),0))/COALESCE(si.conversion_to_base,1) returnable_sale_quantity,
+       COALESCE(string_agg(DISTINCT mb.batch_number,', ') FILTER(WHERE mb.batch_number IS NOT NULL),'') batches
+     FROM sale_items si
+     JOIN medicines m ON m.id=si.medicine_id
+     LEFT JOIN sale_item_batches sib ON sib.sale_item_id=si.id
+     LEFT JOIN medicine_batches mb ON mb.id=sib.batch_id
+     WHERE si.sale_id=$1
+     GROUP BY si.id,m.id
+     ORDER BY si.id`,
+    [id]
+  )).rows;
+
+  const payments=(await db.query(
+    'SELECT payment_method,amount,reference,created_at FROM sale_payments WHERE sale_id=$1 ORDER BY id',
+    [id]
+  )).rows;
+
+  return {sale,items,payments};
+}
+
+module.exports={businessClock,list,detail};
