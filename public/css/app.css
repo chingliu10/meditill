@@ -1004,3 +1004,70 @@ button.mt-status{cursor:pointer}
 @media(min-width:621px) and (max-width:900px){
   .mt-pos-cart{position:static!important;transform:none!important}
 }
+
+
+/* Mobile POS: keep search fixed while only the medicine list scrolls. */
+@media(max-width:620px){
+  .mt-pos-body{
+    height:100dvh;
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden!important;
+    padding-bottom:0!important;
+  }
+
+  .mt-pos-appbar{
+    flex:none;
+  }
+
+  .mt-pos-shell{
+    flex:1;
+    min-height:0!important;
+    height:auto!important;
+    overflow:hidden;
+    padding:8px 8px 0;
+  }
+
+  .mt-pos-fullscreen,
+  .mt-pos-fullscreen .mt-pos-grid,
+  .mt-pos-fullscreen .mt-pos-catalog{
+    height:100%!important;
+    min-height:0!important;
+  }
+
+  .mt-pos-fullscreen .mt-pos-grid{
+    display:block!important;
+  }
+
+  .mt-pos-catalog{
+    display:flex;
+    flex-direction:column;
+    overflow:hidden!important;
+  }
+
+  .mt-pos-search-row{
+    position:relative!important;
+    top:auto!important;
+    flex:none;
+    z-index:20;
+    background:#fff;
+    padding:2px 0 8px;
+    margin-bottom:4px;
+    box-shadow:0 8px 12px -12px rgba(15,23,42,.28);
+  }
+
+  .mt-product-grid,
+  .mt-pos-fullscreen .mt-product-grid{
+    flex:1;
+    min-height:0;
+    max-height:none!important;
+    overflow-y:auto!important;
+    overflow-x:hidden;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    padding-right:0;
+    padding-bottom:88px;
+    scroll-padding-bottom:88px;
+  }
+}
