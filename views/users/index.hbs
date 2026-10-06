@@ -1,4 +1,104 @@
-<section class="mt-page"><div class="mt-page-header"><div><p class="mt-eyebrow">ACCESS CONTROL</p><h1>Users</h1><p>Cashiers, pharmacists and managers with branch access.</p></div><a href="/roles" class="mt-btn mt-btn-secondary">Roles & permissions</a></div>
-<div class="mt-two-column"><article class="mt-panel"><div class="mt-panel-header"><div><h2>User accounts</h2></div></div><div class="mt-table-wrap"><table class="mt-table"><thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Default branch</th><th>Status</th></tr></thead><tbody>{{#each users}}<tr><td><strong>{{name}}</strong><small class="mt-cell-sub">{{email}}</small></td><td>{{username}}</td><td>{{roles}}</td><td>{{default_branch}}</td><td><button class="mt-status user-active {{#if active}}mt-status-success{{else}}mt-status-danger{{/if}}" data-id="{{id}}" data-active="{{active}}">{{#if active}}Active{{else}}Disabled{{/if}}</button></td></tr>{{/each}}</tbody></table></div></article>
-<article class="mt-panel mt-form-panel"><div class="mt-panel-header"><div><h2>Add user</h2></div></div><form method="post" class="mt-panel-body mt-form-stack"><label>Name<input name="name" required></label><label>Username<input name="username" required></label><label>Email<input type="email" name="email"></label><label>Phone<input name="phone"></label><label>Password<input type="password" name="password" minlength="8" required></label><label>Role<select name="role_id" required><option value="">Select role</option>{{#each roles}}<option value="{{id}}">{{name}}</option>{{/each}}</select></label><label>Default branch<select name="default_branch_id" required>{{#each branches}}<option value="{{id}}">{{name}}</option>{{/each}}</select></label><label>Branch access<select name="branch_ids" multiple size="4">{{#each branches}}<option value="{{id}}">{{name}}</option>{{/each}}</select></label><button class="mt-btn mt-btn-primary">Create user</button></form></article></div></section>
-<script>document.querySelectorAll('.user-active').forEach(b=>b.onclick=async()=>{const active=b.dataset.active!=='true';const ok=await MediTillConfirm({title:active?'Enable user?':'Disable user?',message:'This changes whether the account can sign in.'});if(!ok)return;const r=await fetch('/users/'+b.dataset.id+'/active',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({active})});const j=await r.json();if(!r.ok)return MediTillToast(j.error||'Failed','error');location.reload()});</script>
+<section class="mt-page">
+  <div class="mt-page-header">
+    <div>
+      <p class="mt-eyebrow">ACCESS CONTROL</p>
+      <h1>Users</h1>
+      <p>Cashiers, pharmacists and managers with branch access.</p>
+    </div>
+    <a href="/roles" class="mt-btn mt-btn-secondary">Roles & permissions</a>
+  </div>
+
+  <div class="mt-two-column">
+    <article class="mt-panel">
+      <div class="mt-panel-header"><div><h2>User accounts</h2></div></div>
+      <div class="mt-table-wrap">
+        <table class="mt-table">
+          <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Default branch</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+            {{#each users}}
+            <tr>
+              <td><strong>{{name}}</strong><small class="mt-cell-sub">{{email}}</small></td>
+              <td>{{username}}</td>
+              <td>{{roles}}</td>
+              <td>{{default_branch}}</td>
+              <td>
+                {{#if active}}
+                  <span class="mt-status mt-status-success">Active</span>
+                {{else}}
+                  <span class="mt-status mt-status-danger">Disabled</span>
+                {{/if}}
+              </td>
+              <td>
+                <button class="mt-btn mt-btn-xs user-active {{#if active}}mt-btn-ghost-danger{{else}}mt-btn-ghost-success{{/if}}" data-id="{{id}}" data-active="{{active}}">
+                  {{#if active}}Disable user{{else}}Enable user{{/if}}
+                </button>
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="mt-panel mt-form-panel">
+      <div class="mt-panel-header"><div><h2>Add user</h2></div></div>
+      <form method="post" class="mt-panel-body mt-form-stack">
+        <label>Name<input name="name" required></label>
+        <label>Username<input name="username" required></label>
+        <label>Email<input type="email" name="email"></label>
+        <label>Phone<input name="phone"></label>
+        <label>Password<input type="password" name="password" minlength="8" required></label>
+
+        <label>Role
+          <select name="role_id" required>
+            <option value="">Select role</option>
+            {{#each roles}}<option value="{{id}}">{{name}}</option>{{/each}}
+          </select>
+        </label>
+
+        <label>Default branch
+          <select name="default_branch_id" required>
+            {{#each branches}}<option value="{{id}}">{{name}}</option>{{/each}}
+          </select>
+        </label>
+
+        <fieldset class="mt-fieldset">
+          <legend>Branch access</legend>
+          <small>Select every branch this user may enter. The default branch is always granted automatically.</small>
+          <div class="mt-branch-check-grid">
+            {{#each branches}}
+            <label class="mt-check">
+              <input type="checkbox" name="branch_ids" value="{{id}}">
+              <span>{{name}}</span>
+            </label>
+            {{/each}}
+          </div>
+        </fieldset>
+
+        <button class="mt-btn mt-btn-primary">Create user</button>
+      </form>
+    </article>
+  </div>
+</section>
+
+<script>
+document.querySelectorAll('.user-active').forEach(button=>{
+  button.onclick=async()=>{
+    const active=button.dataset.active!=='true';
+    const ok=await MediTillConfirm({
+      title:active?'Enable user?':'Disable user?',
+      message:active?'This account will be allowed to sign in again.':'This account will be blocked from signing in.'
+    });
+    if(!ok)return;
+
+    const response=await fetch('/users/'+button.dataset.id+'/active',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({active})
+    });
+    const data=await response.json();
+    if(!response.ok)return MediTillToast(data.error||'Failed','error');
+    location.reload();
+  };
+});
+</script>
