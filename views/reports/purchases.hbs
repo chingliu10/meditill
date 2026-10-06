@@ -11,11 +11,11 @@
 
   <div class="mt-sales-filterbar">
     <div class="mt-period-strip" aria-label="Purchase report period">
-      {{#each periods}}<a href="{{url}}" class="mt-period-chip {{#if active}}is-active{{/if}}">{{label}}</a>{{/each}}
+      {{#each periods}}<a href="{{url}}" class="mt-period-chip {{#if active}}is-active{{/if}}" data-ajax-target="report-purchases">{{label}}</a>{{/each}}
     </div>
   </div>
 
-  <article class="mt-panel mt-panel-flush">
+  <article class="mt-panel mt-panel-flush" data-ajax-results="report-purchases">
     <div class="mt-table-wrap">
       <table class="mt-table">
         <thead><tr><th>Date</th><th>Purchases</th><th>Total</th></tr></thead>
