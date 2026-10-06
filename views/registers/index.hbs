@@ -1,1 +1,103 @@
-<section class="mt-page"><div class="mt-page-header"><div><p class="mt-eyebrow">CASH DRAWER</p><h1>Registers</h1><p>Open a cashier session and reconcile physical cash at closing.</p></div></div>{{#if current}}<article class="mt-panel mt-register-card"><div class="mt-register-state"><span class="mt-register-icon">▣</span><div><span class="mt-status mt-status-success">OPEN</span><h2>{{current.register_name}}</h2><p>Opened {{dateTime current.opened_at}} · Opening cash TZS {{money current.opening_cash}}</p><p><strong>Expected cash now: TZS {{money expectedCash}}</strong></p></div></div><form id="closeRegister" class="mt-register-form"><label>Actual cash counted<input type="number" min="0" step="0.01" name="actual_cash" required></label><button class="mt-btn mt-btn-danger mt-btn-lg">Close & reconcile</button></form></article>{{else}}{{#if lastClosed}}<article class="mt-panel mt-register-card"><div class="mt-register-state"><span class="mt-register-icon">✓</span><div><span class="mt-status mt-status-info">LAST RECONCILIATION</span><h2>{{lastClosed.register_name}}</h2><p>Expected TZS {{money lastClosed.expected_cash}} · Actual TZS {{money lastClosed.actual_cash}} · Variance TZS {{money lastClosed.difference}}</p><small>Closed {{dateTime lastClosed.closed_at}}</small></div></div></article>{{/if}}<div class="mt-two-column"><article class="mt-panel mt-form-panel"><div class="mt-panel-header"><div><h2>Open register</h2><p>Enter the physical cash currently in the drawer.</p></div></div><form id="openRegister" class="mt-panel-body mt-form-stack"><label>Register<select name="register_id">{{#each registers}}{{#if active}}<option value="{{id}}">{{name}}</option>{{/if}}{{/each}}</select></label><label>Opening cash<input type="number" min="0" step="0.01" name="opening_cash" value="0"></label><button class="mt-btn mt-btn-primary mt-btn-lg">Open register</button></form></article><article class="mt-panel mt-form-panel"><div class="mt-panel-header"><div><h2>Add register</h2></div></div><form method="post" class="mt-panel-body mt-form-stack"><label>Name<input name="name" placeholder="Front Counter" required></label><button class="mt-btn mt-btn-secondary">Create register</button></form></article></div>{{/if}}</section><script>async function postRegister(f,u,m){const r=await fetch(u,{method:'POST',headers:{'content-type':'application/json','accept':'application/json'},body:JSON.stringify(Object.fromEntries(new FormData(f)))});let j={};try{j=await r.json()}catch(error){throw new Error('Register request returned an invalid response')}if(!r.ok)throw new Error(j.error||'Failed');const message=(u.includes('/close')&&j.expected_cash!=null)?('Register closed. Expected TZS '+Number(j.expected_cash).toLocaleString('en-TZ')+', actual TZS '+Number(j.actual_cash).toLocaleString('en-TZ')+', variance TZS '+Number(j.difference).toLocaleString('en-TZ')):m;sessionStorage.setItem('meditillToast',JSON.stringify({type:'success',message}));location.reload()}document.querySelector('#openRegister')?.addEventListener('submit',e=>{e.preventDefault();postRegister(e.target,'/registers/api/open','Register opened successfully.').catch(x=>MediTillToast(x.message,'error'))});document.querySelector('#closeRegister')?.addEventListener('submit',e=>{e.preventDefault();postRegister(e.target,'/registers/api/close','Register closed and reconciled.').catch(x=>MediTillToast(x.message,'error'))});</script>
+<section class="mt-page">
+  <div class="mt-page-header">
+    <div>
+      <p class="mt-eyebrow">CASH DRAWER</p>
+      <h1>Registers</h1>
+      <p>Open a cashier session and reconcile physical cash at closing.</p>
+    </div>
+    {{#if current}}{{#if returnPath}}<a href="{{returnPath}}" class="mt-btn mt-btn-primary mt-btn-lg">Continue to POS</a>{{/if}}{{/if}}
+  </div>
+
+  {{#if current}}
+  <article class="mt-panel mt-register-card">
+    <div class="mt-register-state">
+      <span class="mt-register-icon">▣</span>
+      <div>
+        <span class="mt-status mt-status-success">OPEN</span>
+        <h2>{{current.register_name}}</h2>
+        <p>Opened {{dateTime current.opened_at}} · Opening cash TZS {{money current.opening_cash}}</p>
+        <p><strong>Expected cash now: TZS {{money expectedCash}}</strong></p>
+      </div>
+    </div>
+    <form id="closeRegister" class="mt-register-form">
+      <label>Actual cash counted<input type="number" min="0" step="0.01" name="actual_cash" required></label>
+      <button class="mt-btn mt-btn-danger mt-btn-lg">Close & reconcile</button>
+    </form>
+  </article>
+  {{else}}
+    {{#if lastClosed}}
+    <article class="mt-panel mt-register-card">
+      <div class="mt-register-state">
+        <span class="mt-register-icon">✓</span>
+        <div>
+          <span class="mt-status mt-status-info">LAST RECONCILIATION</span>
+          <h2>{{lastClosed.register_name}}</h2>
+          <p>Expected TZS {{money lastClosed.expected_cash}} · Actual TZS {{money lastClosed.actual_cash}} · Variance TZS {{money lastClosed.difference}}</p>
+          <small>Closed {{dateTime lastClosed.closed_at}}</small>
+        </div>
+      </div>
+    </article>
+    {{/if}}
+
+    <div class="mt-two-column">
+      <article class="mt-panel mt-form-panel">
+        <div class="mt-panel-header"><div><h2>Open register</h2><p>Enter the physical cash currently in the drawer.</p></div></div>
+        <form id="openRegister" class="mt-panel-body mt-form-stack">
+          <label>Register
+            <select name="register_id">{{#each registers}}{{#if active}}<option value="{{id}}">{{name}}</option>{{/if}}{{/each}}</select>
+          </label>
+          <label>Opening cash<input type="number" min="0" step="0.01" name="opening_cash" value="0"></label>
+          <button class="mt-btn mt-btn-primary mt-btn-lg">Open register</button>
+        </form>
+      </article>
+
+      {{#if (can user "branches.manage")}}
+      <article class="mt-panel mt-form-panel">
+        <div class="mt-panel-header"><div><h2>Add register</h2></div></div>
+        <form method="post" class="mt-panel-body mt-form-stack">
+          <label>Name<input name="name" placeholder="Front Counter" required></label>
+          <button class="mt-btn mt-btn-secondary">Create register</button>
+        </form>
+      </article>
+      {{/if}}
+    </div>
+  {{/if}}
+</section>
+
+<script>
+const returnPath={{json returnPath}};
+
+async function postRegister(form,url,message){
+  const response=await fetch(url,{
+    method:'POST',
+    headers:{'content-type':'application/json','accept':'application/json'},
+    body:JSON.stringify(Object.fromEntries(new FormData(form)))
+  });
+
+  let data={};
+  try{data=await response.json()}catch(error){throw new Error('Register request returned an invalid response')}
+  if(!response.ok)throw new Error(data.error||'Failed');
+
+  const toastMessage=(url.includes('/close')&&data.expected_cash!=null)
+    ?('Register closed. Expected TZS '+Number(data.expected_cash).toLocaleString('en-TZ')+', actual TZS '+Number(data.actual_cash).toLocaleString('en-TZ')+', variance TZS '+Number(data.difference).toLocaleString('en-TZ'))
+    :message;
+
+  sessionStorage.setItem('meditillToast',JSON.stringify({type:'success',message:toastMessage}));
+
+  if(url.includes('/open')&&returnPath){
+    location.href=returnPath;
+    return;
+  }
+  location.reload();
+}
+
+document.querySelector('#openRegister')?.addEventListener('submit',event=>{
+  event.preventDefault();
+  postRegister(event.target,'/registers/api/open','Register opened successfully.').catch(error=>MediTillToast(error.message,'error'));
+});
+
+document.querySelector('#closeRegister')?.addEventListener('submit',event=>{
+  event.preventDefault();
+  postRegister(event.target,'/registers/api/close','Register closed and reconciled.').catch(error=>MediTillToast(error.message,'error'));
+});
+</script>
