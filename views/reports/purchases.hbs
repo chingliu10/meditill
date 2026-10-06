@@ -6,14 +6,15 @@
     <a href="/reports/expiry">Expiry</a>
     <a href="/reports/profit-loss">P&amp;L</a>
   </div>
-  <div class="mt-page-header"><div><p class="mt-eyebrow">REPORTS</p><h1>Purchases</h1></div></div>
-  <div class="mt-toolbar">
-    <form class="mt-filter-form">
-      <label>From<input type="date" name="from" value="{{from}}"></label>
-      <label>To<input type="date" name="to" value="{{to}}"></label>
-      <button class="mt-btn mt-btn-primary">Apply</button>
-    </form>
+
+  <div class="mt-page-header"><div><p class="mt-eyebrow">REPORTS</p><h1>Purchases</h1><p>Daily purchase totals for a bounded reporting period.</p></div></div>
+
+  <div class="mt-sales-filterbar">
+    <div class="mt-period-strip" aria-label="Purchase report period">
+      {{#each periods}}<a href="{{url}}" class="mt-period-chip {{#if active}}is-active{{/if}}">{{label}}</a>{{/each}}
+    </div>
   </div>
+
   <article class="mt-panel mt-panel-flush">
     <div class="mt-table-wrap">
       <table class="mt-table">
