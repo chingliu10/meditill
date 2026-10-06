@@ -267,6 +267,17 @@
     form.requestSubmit();
   });
 
+  document.addEventListener('keydown',event=>{
+    if(event.key!=='Enter'||event.isComposing)return;
+    const field=event.target.closest?.('form[data-ajax-filter][data-debounce-search] input');
+    if(!field||field.type&& !['text','search'].includes(field.type))return;
+    const form=field.form;
+    if(!form)return;
+    event.preventDefault();
+    clearTimeout(debounceTimers.get(form));
+    form.requestSubmit();
+  });
+
   document.addEventListener('click',event=>{
     if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
     const link=event.target.closest?.('a.mt-page-link,a.mt-period-chip,a.mt-search-clear');
