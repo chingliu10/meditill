@@ -49,20 +49,32 @@ async function daily(db,branchId,from,to,timezone='Africa/Dar_es_Salaam'){
   return rows;
 }
 
-async function inventory(db,organizationId,branchId){
-  const {rows}=await db.query(
-    `SELECT m.name,m.strength,u.name unit_name,
+async function inventory(db,organizationId,branchId,filters={}){
+  const q=String(filters.q||'').trim();
+  const term=`%${q}%`;
+  const page=Math.max(1,Number(filters.page)||1);
+  const pageSize=Math.min(100,Math.max(1,Number(filters.pageSize)||25));
+  const offset=(page-1)*pageSize;
+
+  const base=`
+    SELECT m.id,m.name,m.strength,u.name unit_name,
       COALESCE(SUM(b.quantity_available) FILTER(WHERE b.status='SALEABLE' AND (b.expiry_date IS NULL OR b.expiry_date>=current_date)),0) quantity,
       COALESCE(SUM(b.quantity_available*b.unit_cost) FILTER(WHERE b.status='SALEABLE' AND (b.expiry_date IS NULL OR b.expiry_date>=current_date)),0) value
-     FROM medicines m
-     LEFT JOIN units u ON u.id=m.base_unit_id
-     LEFT JOIN medicine_batches b ON b.medicine_id=m.id AND b.branch_id=$2
-     WHERE m.organization_id=$1 AND m.active=true
-     GROUP BY m.id,u.id
-     ORDER BY value DESC,m.name`,
-    [organizationId,branchId]
+    FROM medicines m
+    LEFT JOIN units u ON u.id=m.base_unit_id
+    LEFT JOIN medicine_batches b ON b.medicine_id=m.id AND b.branch_id=$2
+    WHERE m.organization_id=$1 AND m.active=true
+      AND ($3='' OR m.name ILIKE $4 OR COALESCE(m.generic_name,'') ILIKE $4 OR COALESCE(m.strength,'') ILIKE $4)
+    GROUP BY m.id,u.id
+  `;
+
+  const params=[organizationId,branchId,q,term];
+  const total=Number((await db.query(`SELECT COUNT(*)::int total FROM (${base}) x`,params)).rows[0]?.total||0);
+  const {rows}=await db.query(
+    `SELECT * FROM (${base}) x ORDER BY value DESC,name LIMIT $5 OFFSET $6`,
+    [...params,pageSize,offset]
   );
-  return rows;
+  return {rows,total};
 }
 
 async function purchases(db,branchId,from,to){
@@ -80,7 +92,25 @@ async function purchases(db,branchId,from,to){
   return rows;
 }
 
-async function expiry(db,branchId){
+async function expiry(db,branchId,filters={}){
+  const q=String(filters.q||'').trim();
+  const term=`%${q}%`;
+  const days=Math.max(1,Math.min(Number(filters.days)||90,365));
+  const page=Math.max(1,Number(filters.page)||1);
+  const pageSize=Math.min(100,Math.max(1,Number(filters.pageSize)||25));
+  const offset=(page-1)*pageSize;
+  const params=[branchId,q,term,days];
+
+  const where=`b.branch_id=$1 AND b.quantity_available>0
+    AND b.expiry_date IS NOT NULL
+    AND b.expiry_date<=current_date+$4::int
+    AND ($2='' OR m.name ILIKE $3 OR COALESCE(m.generic_name,'') ILIKE $3 OR COALESCE(b.batch_number,'') ILIKE $3)`;
+
+  const total=Number((await db.query(
+    `SELECT COUNT(*)::int total FROM medicine_batches b JOIN medicines m ON m.id=b.medicine_id WHERE ${where}`,
+    params
+  )).rows[0]?.total||0);
+
   const {rows}=await db.query(
     `SELECT m.name,m.strength,b.batch_number,b.expiry_date,b.quantity_available,b.unit_cost,
       b.quantity_available*b.unit_cost value_at_risk,
@@ -88,17 +118,16 @@ async function expiry(db,branchId){
         WHEN b.expiry_date<current_date THEN 'EXPIRED'
         WHEN b.expiry_date<=current_date+30 THEN '0-30 DAYS'
         WHEN b.expiry_date<=current_date+60 THEN '31-60 DAYS'
-        ELSE '61-90 DAYS'
+        ELSE '61-90+ DAYS'
       END bucket
      FROM medicine_batches b
      JOIN medicines m ON m.id=b.medicine_id
-     WHERE b.branch_id=$1 AND b.quantity_available>0
-       AND b.expiry_date IS NOT NULL
-       AND b.expiry_date<=current_date+90
-     ORDER BY b.expiry_date`,
-    [branchId]
+     WHERE ${where}
+     ORDER BY b.expiry_date,b.id
+     LIMIT $5 OFFSET $6`,
+    [...params,pageSize,offset]
   );
-  return rows;
+  return {rows,total};
 }
 
 async function profitLoss(db,branchId,startDate,endDate,timezone='Africa/Dar_es_Salaam'){
