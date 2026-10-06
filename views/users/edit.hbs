@@ -1,0 +1,94 @@
+<section class="mt-page">
+  <div class="mt-page-header">
+    <div>
+      <p class="mt-eyebrow">ACCESS CONTROL</p>
+      <h1>Edit user</h1>
+      <p>Update account details, role, branch access and password.</p>
+    </div>
+    <a href="/users" class="mt-btn mt-btn-secondary">Back to users</a>
+  </div>
+
+  <article class="mt-panel mt-form-panel">
+    <div class="mt-panel-header">
+      <div>
+        <h2>{{editUser.name}}</h2>
+        <p>{{editUser.username}} · {{#if editUser.active}}Active{{else}}Disabled{{/if}}</p>
+      </div>
+    </div>
+
+    <form method="post" action="/users/{{editUser.id}}" class="mt-panel-body mt-form-stack">
+      <label>
+        Name
+        <input name="name" value="{{editUser.name}}" maxlength="160" required autocomplete="name">
+      </label>
+
+      <label>
+        Username
+        <input name="username" value="{{editUser.username}}" maxlength="80" required autocomplete="username">
+      </label>
+
+      <label>
+        Email
+        <input type="email" name="email" value="{{editUser.email}}" autocomplete="email">
+      </label>
+
+      <label>
+        Phone
+        <input name="phone" value="{{editUser.phone}}" autocomplete="tel" inputmode="tel">
+      </label>
+
+      <label>
+        New password
+        <span class="mt-password-field">
+          <input
+            id="editUserPassword"
+            type="password"
+            name="password"
+            minlength="8"
+            autocomplete="new-password"
+            placeholder="Leave blank to keep current password"
+          >
+          <button type="button" class="mt-password-toggle" data-password-toggle="editUserPassword" aria-label="Show password" title="Show password">👁</button>
+        </span>
+        <small class="mt-cell-sub">Leave blank unless you want to reset this user's password.</small>
+      </label>
+
+      <label>
+        Role
+        <select name="role_id" required>
+          <option value="">Select role</option>
+          {{#each roles}}
+            <option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>
+          {{/each}}
+        </select>
+      </label>
+
+      <label>
+        Default branch
+        <select name="default_branch_id" required>
+          {{#each branches}}
+            <option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>
+          {{/each}}
+        </select>
+      </label>
+
+      <fieldset class="mt-fieldset">
+        <legend>Branch access</legend>
+        <small>Select every branch this user may enter. The default branch is always granted automatically.</small>
+        <div class="mt-branch-check-grid">
+          {{#each branches}}
+            <label class="mt-check">
+              <input type="checkbox" name="branch_ids" value="{{id}}" {{#if checked}}checked{{/if}}>
+              <span>{{name}}</span>
+            </label>
+          {{/each}}
+        </div>
+      </fieldset>
+
+      <div class="mt-row-actions">
+        <button class="mt-btn mt-btn-primary" type="submit">Save changes</button>
+        <a href="/users" class="mt-btn mt-btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </article>
+</section>
