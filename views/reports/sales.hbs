@@ -17,10 +17,11 @@
 
   <div class="mt-sales-filterbar">
     <div class="mt-period-strip" aria-label="Sales report period">
-      {{#each periods}}<a href="{{url}}" class="mt-period-chip {{#if active}}is-active{{/if}}">{{label}}</a>{{/each}}
+      {{#each periods}}<a href="{{url}}" class="mt-period-chip {{#if active}}is-active{{/if}}" data-ajax-target="report-sales">{{label}}</a>{{/each}}
     </div>
   </div>
 
+  <div data-ajax-results="report-sales">
   <div class="mt-metric-grid">
     <article class="mt-metric-card"><div><span>Net revenue</span><strong>TZS {{money summary.revenue}}</strong></div></article>
     <article class="mt-metric-card"><div><span>Net cost</span><strong>TZS {{money summary.cost}}</strong></div></article>
@@ -42,4 +43,5 @@
       </table>
     </div>
   </article>
+  </div>
 </section>
