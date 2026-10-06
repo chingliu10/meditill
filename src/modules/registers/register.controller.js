@@ -18,9 +18,15 @@ async function index(req,res,next){
     ]);
     let expectedCash=null;
     if(current) expectedCash=await repo.expectedCash(pool,current.id);
+    const activeRegisters=registers.filter(register=>register.active===true);
+    const availableRegisters=activeRegisters.filter(register=>register.available===true);
     res.render('registers/index',{
       title:'Registers',
       registers,
+      activeRegisters,
+      availableRegisters,
+      hasActiveRegisters:activeRegisters.length>0,
+      hasAvailableRegisters:availableRegisters.length>0,
       current,
       lastClosed,
       expectedCash,
