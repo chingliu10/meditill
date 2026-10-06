@@ -1,6 +1,6 @@
 const {pool}=require('../../config/db');
 const repo=require('./report.repository');
-const {safePage,pagination}=require('../../shared/list-pagination');
+const {PERIODS,resolvePeriod,safePage,pagination}=require('../../shared/list-pagination');
 function valid(value){return /^\d{4}-\d{2}-\d{2}$/.test(String(value||''));}
 
 const PNL_PERIODS={
@@ -30,14 +30,22 @@ function pnlWindow(businessDate,key){
 async function sales(req,res,next){
   try{
     const clock=await repo.businessClock(pool,req.branch.id);
-    const today=clock.business_date;
-    const from=valid(req.query.from)?req.query.from:today;
-    const to=valid(req.query.to)?req.query.to:today;
+    const range=resolvePeriod(clock.business_date,String(req.query.period||'7d'));
     const [summary,days]=await Promise.all([
-      repo.salesSummary(pool,req.branch.id,from,to,clock.timezone),
-      repo.daily(pool,req.branch.id,from,to,clock.timezone)
+      repo.salesSummary(pool,req.branch.id,range.startDate,range.endDate,clock.timezone),
+      repo.daily(pool,req.branch.id,range.startDate,range.endDate,clock.timezone)
     ]);
-    res.render('reports/sales',{title:'Sales Report',summary,days,from,to});
+    res.render('reports/sales',{
+      title:'Sales Report',
+      summary,
+      days,
+      period:range.period.key,
+      periods:PERIODS.map(item=>({
+        ...item,
+        active:item.key===range.period.key,
+        url:'/reports/sales?period='+item.key
+      }))
+    });
   }catch(error){next(error);}
 }
 
@@ -63,14 +71,16 @@ async function inventory(req,res,next){
 async function purchases(req,res,next){
   try{
     const clock=await repo.businessClock(pool,req.branch.id);
-    const today=clock.business_date;
-    const from=valid(req.query.from)?req.query.from:today;
-    const to=valid(req.query.to)?req.query.to:today;
+    const range=resolvePeriod(clock.business_date,String(req.query.period||'7d'));
     res.render('reports/purchases',{
       title:'Purchase Report',
-      rows:await repo.purchases(pool,req.branch.id,from,to),
-      from,
-      to
+      rows:await repo.purchases(pool,req.branch.id,range.startDate,shiftDate(range.endDate,-1)),
+      period:range.period.key,
+      periods:PERIODS.map(item=>({
+        ...item,
+        active:item.key===range.period.key,
+        url:'/reports/purchases?period='+item.key
+      }))
     });
   }catch(error){next(error);}
 }
