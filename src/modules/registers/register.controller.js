@@ -4,6 +4,11 @@ const service=require('./register.service');
 const {setFlash}=require('../../shared/flash');
 const {appError}=require('../../shared/app-error');
 
+function safeReturnPath(value){
+  const path=String(value||'');
+  return path.startsWith('/')&&!path.startsWith('//')?path:'';
+}
+
 async function index(req,res,next){
   try{
     const [registers,current,lastClosed]=await Promise.all([
@@ -13,7 +18,14 @@ async function index(req,res,next){
     ]);
     let expectedCash=null;
     if(current) expectedCash=await repo.expectedCash(pool,current.id);
-    res.render('registers/index',{title:'Registers',registers,current,lastClosed,expectedCash});
+    res.render('registers/index',{
+      title:'Registers',
+      registers,
+      current,
+      lastClosed,
+      expectedCash,
+      returnPath:safeReturnPath(req.query.return)
+    });
   }catch(error){next(error);}
 }
 
