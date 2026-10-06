@@ -11,6 +11,11 @@ async function timed(label,fn){
 }
 
 async function probe(){
+  const databaseName=(await pool.query('SELECT current_database() AS name')).rows[0]?.name;
+  if(databaseName!=='meditill_perf'&&process.env.ALLOW_PERF_ON_SHARED_DB!=='1'){
+    throw new Error(`Refusing to run performance probes against database "${databaseName}". Point DATABASE_URL to meditill_perf first.`);
+  }
+
   const org=(await pool.query('SELECT id FROM organizations WHERE name=$1 LIMIT 1',[ORG_NAME])).rows[0];
   if(!org) throw new Error('Performance dataset not found. Run npm run perf:seed first.');
   const branch=(await pool.query('SELECT id FROM branches WHERE organization_id=$1 ORDER BY id LIMIT 1',[org.id])).rows[0];
