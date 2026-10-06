@@ -19,10 +19,14 @@
         <p><strong>Expected cash now: TZS {{money expectedCash}}</strong></p>
       </div>
     </div>
+    {{#if (can user "register.close")}}
     <form id="closeRegister" class="mt-register-form">
       <label>Actual cash counted<input type="number" min="0" step="0.01" name="actual_cash" required></label>
       <button class="mt-btn mt-btn-danger mt-btn-lg">Close & reconcile</button>
     </form>
+    {{else}}
+    <div class="mt-empty-state">You do not have permission to close this register.</div>
+    {{/if}}
   </article>
   {{else}}
     {{#if lastClosed}}
@@ -41,14 +45,66 @@
 
     <div class="mt-two-column">
       <article class="mt-panel mt-form-panel">
-        <div class="mt-panel-header"><div><h2>Open register</h2><p>Enter the physical cash currently in the drawer.</p></div></div>
-        <form id="openRegister" class="mt-panel-body mt-form-stack">
-          <label>Register
-            <select name="register_id">{{#each registers}}{{#if active}}<option value="{{id}}">{{name}}</option>{{/if}}{{/each}}</select>
-          </label>
-          <label>Opening cash<input type="number" min="0" step="0.01" name="opening_cash" value="0"></label>
-          <button class="mt-btn mt-btn-primary mt-btn-lg">Open register</button>
-        </form>
+        <div class="mt-panel-header">
+          <div>
+            <h2>Open register</h2>
+            <p>Enter the physical cash currently in the drawer.</p>
+          </div>
+        </div>
+
+        {{#if (can user "register.open")}}
+          {{#if hasAvailableRegisters}}
+          <form id="openRegister" class="mt-panel-body mt-form-stack">
+            <label>Register
+              <select name="register_id" required>
+                {{#each availableRegisters}}
+                  <option value="{{id}}">{{name}}</option>
+                {{/each}}
+              </select>
+            </label>
+            <label>Opening cash<input type="number" min="0" step="0.01" name="opening_cash" value="0" required></label>
+            <button class="mt-btn mt-btn-primary mt-btn-lg">Open register</button>
+          </form>
+          {{else}}
+            {{#if hasActiveRegisters}}
+            <div class="mt-panel-body">
+              <div class="mt-empty-state">
+                <strong>All registers are currently in use.</strong>
+                <p>Close an existing session before opening another register.</p>
+              </div>
+              <div class="mt-list">
+                {{#each activeRegisters}}
+                  <div class="mt-role-row">
+                    <div>
+                      <strong>{{name}}</strong>
+                      {{#if open_user_name}}<small>Open by {{open_user_name}}</small>{{/if}}
+                    </div>
+                    <span class="mt-status mt-status-warning">IN USE</span>
+                  </div>
+                {{/each}}
+              </div>
+            </div>
+            {{else}}
+            <div class="mt-panel-body">
+              <div class="mt-empty-state">
+                <strong>No active register is configured for {{currentBranch.name}}.</strong>
+                {{#if (can user "branches.manage")}}
+                  <p>Create a register using the form beside this panel, then open it.</p>
+                {{else}}
+                  <p>Ask an administrator to create a register for this branch.</p>
+                {{/if}}
+              </div>
+            </div>
+            {{/if}}
+          {{/if}}
+        {{else}}
+        <div class="mt-panel-body">
+          <div class="mt-empty-state">
+            <strong>You do not have permission to open a register.</strong>
+            <p>An administrator must grant the <code>register.open</code> permission to your role.</p>
+          </div>
+        </div>
+        {{/if}}
       </article>
 
       {{#if (can user "branches.manage")}}
