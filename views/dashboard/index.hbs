@@ -3,78 +3,111 @@
     <div>
       <p class="mt-eyebrow">BUSINESS OVERVIEW</p>
       <h1>Welcome, {{user.name}}</h1>
-      <p>Monitor sales, profit, inventory health and recent activity at {{currentBranch.name}}.</p>
+      <p>Monitor the activity you are authorized to see at {{currentBranch.name}}.</p>
     </div>
-    <a href="/pos" class="mt-btn mt-btn-primary mt-btn-lg">Start selling</a>
+    <div class="d-flex gap-2 align-items-end flex-wrap">
+      <form method="get">
+        <label class="d-flex flex-column gap-1">
+          <small>Period</small>
+          <select name="period" class="mt-branch-select" onchange="this.form.submit()">
+            <option value="today" {{#if periodToday}}selected{{/if}}>Today</option>
+            <option value="yesterday" {{#if periodYesterday}}selected{{/if}}>Yesterday</option>
+            <option value="7d" {{#if period7d}}selected{{/if}}>Last 7 Days</option>
+            <option value="30d" {{#if period30d}}selected{{/if}}>Last 30 Days</option>
+            <option value="1y" {{#if period1y}}selected{{/if}}>Last 1 Year</option>
+          </select>
+        </label>
+      </form>
+      {{#if access.canSaleCreate}}<a href="/pos" class="mt-btn mt-btn-primary mt-btn-lg">Start selling</a>{{/if}}
+    </div>
   </div>
 
+  {{#if hasMetricCards}}
   <div class="mt-metric-grid">
+    {{#if access.canSales}}
     <article class="mt-metric-card">
       <div class="mt-metric-icon mt-metric-icon-green">↗</div>
       <div>
-        <span>Sales today</span>
-        <strong>TZS {{money data.sales_today}}</strong>
-        <small>{{data.transactions_today}} transactions</small>
+        <span>Sales</span>
+        <strong>TZS {{money data.sales_period}}</strong>
+        <small>{{period.label}} · {{data.transactions_period}} transactions</small>
       </div>
     </article>
+    {{/if}}
 
+    {{#if access.canProfit}}
     <article class="mt-metric-card">
       <div class="mt-metric-icon mt-metric-icon-blue">+</div>
       <div>
-        <span>Gross profit today</span>
-        <strong>TZS {{money data.gross_profit_today}}</strong>
-        <small>Based on actual batch cost</small>
+        <span>Gross profit</span>
+        <strong>TZS {{money data.gross_profit_period}}</strong>
+        <small>{{period.label}} · based on actual batch cost</small>
       </div>
     </article>
+    {{/if}}
 
+    {{#if access.canPurchases}}
     <article class="mt-metric-card">
       <div class="mt-metric-icon mt-metric-icon-amber">↓</div>
       <div>
-        <span>Purchases today</span>
-        <strong>TZS {{money data.purchases_today}}</strong>
-        <small>Received stock value</small>
+        <span>Purchases</span>
+        <strong>TZS {{money data.purchases_period}}</strong>
+        <small>{{period.label}} · received stock value</small>
       </div>
     </article>
+    {{/if}}
 
+    {{#if access.canSales}}
     <article class="mt-metric-card">
       <div class="mt-metric-icon mt-metric-icon-purple">#</div>
       <div>
         <span>Transactions</span>
-        <strong>{{data.transactions_today}}</strong>
-        <small>Completed today</small>
+        <strong>{{data.transactions_period}}</strong>
+        <small>{{period.label}}</small>
       </div>
     </article>
+    {{/if}}
   </div>
+  {{/if}}
 
+  {{#if hasAlerts}}
   <div class="mt-alert-grid">
+    {{#if access.canInventory}}
     <a href="/inventory" class="mt-alert-card mt-alert-warning">
       <span class="mt-alert-count">{{data.low_stock}}</span>
-      <span><strong>Low stock</strong><small>At or below reorder level</small></span>
+      <span><strong>Low stock</strong><small>Current · at or below reorder level</small></span>
       <b>→</b>
     </a>
     <a href="/inventory" class="mt-alert-card mt-alert-danger">
       <span class="mt-alert-count">{{data.out_of_stock}}</span>
-      <span><strong>Out of stock</strong><small>No saleable quantity</small></span>
+      <span><strong>Out of stock</strong><small>Current · no saleable quantity</small></span>
       <b>→</b>
     </a>
+    {{/if}}
+
+    {{#if access.canExpiry}}
     <a href="/reports/expiry" class="mt-alert-card mt-alert-info">
       <span class="mt-alert-count">{{data.expiring_30}}</span>
-      <span><strong>Expiring ≤30 days</strong><small>Needs attention soon</small></span>
+      <span><strong>Expiring ≤30 days</strong><small>Current · needs attention soon</small></span>
       <b>→</b>
     </a>
     <a href="/reports/expiry" class="mt-alert-card mt-alert-danger-soft">
       <span class="mt-alert-count">{{data.expired_batches}}</span>
-      <span><strong>Expired batches</strong><small>Remove from saleable stock</small></span>
+      <span><strong>Expired batches</strong><small>Current · remove from saleable stock</small></span>
       <b>→</b>
     </a>
+    {{/if}}
   </div>
+  {{/if}}
 
+  {{#if hasInsights}}
   <div class="mt-dashboard-grid">
+    {{#if access.canSalesReports}}
     <article class="mt-panel">
       <div class="mt-panel-header">
         <div>
           <h2>Top selling medicines</h2>
-          <p>Last 30 days</p>
+          <p>{{period.label}}</p>
         </div>
         <a href="/reports/sales">View report</a>
       </div>
@@ -89,16 +122,18 @@
           <span class="mt-pill mt-pill-success">Sold {{quantity quantity_sold}}</span>
         </div>
         {{else}}
-        <div class="mt-empty-state">Sales will appear here after transactions are completed.</div>
+        <div class="mt-empty-state">No sales found for this period.</div>
         {{/each}}
       </div>
     </article>
+    {{/if}}
 
+    {{#if access.canExpiry}}
     <article class="mt-panel">
       <div class="mt-panel-header">
         <div>
           <h2>Expiry risk</h2>
-          <p>Next 90 days and expired</p>
+          <p>Current · next 90 days and expired</p>
         </div>
         <a href="/reports/expiry">Expiry report</a>
       </div>
@@ -119,15 +154,18 @@
         {{/each}}
       </div>
     </article>
+    {{/if}}
   </div>
+  {{/if}}
 
+  {{#if access.canSales}}
   <article class="mt-panel">
     <div class="mt-panel-header">
       <div>
         <h2>Recent sales</h2>
-        <p>Latest completed transactions</p>
+        <p>{{period.label}}</p>
       </div>
-      <a href="/reports/sales">All sales</a>
+      {{#if access.canSalesReports}}<a href="/reports/sales">All sales</a>{{else}}<a href="/sales">All sales</a>{{/if}}
     </div>
     <div class="mt-table-wrap">
       <table class="mt-table">
@@ -143,10 +181,11 @@
             <td class="mt-text-right"><strong>TZS {{money total}}</strong></td>
           </tr>
           {{else}}
-          <tr><td colspan="4"><div class="mt-empty-state">No sales yet.</div></td></tr>
+          <tr><td colspan="4"><div class="mt-empty-state">No sales found for this period.</div></td></tr>
           {{/each}}
         </tbody>
       </table>
     </div>
   </article>
+  {{/if}}
 </section>
