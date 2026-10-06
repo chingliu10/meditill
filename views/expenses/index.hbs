@@ -1,3 +1,57 @@
-<section class="mt-page"><div class="mt-page-header"><div><p class="mt-eyebrow">CASH CONTROL</p><h1>Expenses</h1><p>Record branch operating expenses and cash drawer deductions.</p></div></div>
-<div class="mt-two-column"><article class="mt-panel"><div class="mt-panel-header"><div><h2>Recent expenses</h2></div></div><div class="mt-table-wrap"><table class="mt-table"><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Method</th><th>Amount</th></tr></thead><tbody>{{#each expenses}}<tr><td>{{dateTime created_at}}</td><td><strong>{{category}}</strong></td><td>{{description}}</td><td>{{payment_method}}</td><td><strong>TZS {{money amount}}</strong></td></tr>{{else}}<tr><td colspan="5"><div class="mt-empty-state">No expenses yet.</div></td></tr>{{/each}}</tbody></table></div></article>
-<article class="mt-panel mt-form-panel"><div class="mt-panel-header"><div><h2>Add expense</h2></div></div><form method="post" class="mt-panel-body mt-form-stack"><label>Category<input name="category" placeholder="Transport, utilities..." required></label><label>Description<textarea name="description" rows="3"></textarea></label><label>Amount<input type="number" min="0.01" step="0.01" name="amount" required></label><label>Payment method<select name="payment_method"><option>CASH</option><option>MOBILE_MONEY</option><option>CARD</option><option>BANK</option></select></label><button class="mt-btn mt-btn-primary mt-btn-lg">Record expense</button></form></article></div></section>
+<section class="mt-page">
+  <div class="mt-page-header">
+    <div><p class="mt-eyebrow">CASH CONTROL</p><h1>Expenses</h1><p>Record branch operating expenses and cash drawer deductions.</p></div>
+  </div>
+
+  <div class="mt-sales-filterbar">
+    <div class="mt-period-strip" aria-label="Expense period">
+      {{#each periods}}<a href="{{url}}" class="mt-period-chip {{#if active}}is-active{{/if}}">{{label}}</a>{{/each}}
+    </div>
+    <form class="mt-sales-search mt-expense-filter" method="get">
+      <input type="hidden" name="period" value="{{period}}">
+      <input name="q" value="{{q}}" placeholder="Search category or description">
+      <select name="method">
+        {{#each paymentMethods}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+      </select>
+      <button class="mt-btn mt-btn-primary">Filter</button>
+    </form>
+  </div>
+
+  <div class="mt-two-column">
+    <article class="mt-panel">
+      <div class="mt-panel-header"><div><h2>Expense history</h2><p>25 expenses per page</p></div></div>
+      <div class="mt-table-wrap">
+        <table class="mt-table">
+          <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Method</th><th>Amount</th></tr></thead>
+          <tbody>
+          {{#each expenses}}
+            <tr><td>{{dateTime created_at}}</td><td><strong>{{category}}</strong></td><td>{{description}}</td><td>{{payment_method}}</td><td><strong>TZS {{money amount}}</strong></td></tr>
+          {{else}}
+            <tr><td colspan="5"><div class="mt-empty-state">No expenses found for this period.</div></td></tr>
+          {{/each}}
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-pagination-bar">
+        <div class="mt-pagination-summary">{{#if pagination.totalRows}}Showing <strong>{{pagination.firstRow}}–{{pagination.lastRow}}</strong> of <strong>{{pagination.totalRows}}</strong>{{else}}0 expenses{{/if}}</div>
+        <nav class="mt-pagination">
+          {{#if pagination.hasPrevious}}<a class="mt-page-link" href="{{pagination.previousUrl}}">‹ Previous</a>{{else}}<span class="mt-page-link is-disabled">‹ Previous</span>{{/if}}
+          {{#each pagination.pageLinks}}<a class="mt-page-link mt-page-number {{#if active}}is-active{{/if}}" href="{{url}}">{{value}}</a>{{/each}}
+          {{#if pagination.hasNext}}<a class="mt-page-link" href="{{pagination.nextUrl}}">Next ›</a>{{else}}<span class="mt-page-link is-disabled">Next ›</span>{{/if}}
+        </nav>
+        <div class="mt-pagination-page">Page {{pagination.page}} of {{pagination.totalPages}} · 25 rows</div>
+      </div>
+    </article>
+
+    <article class="mt-panel mt-form-panel">
+      <div class="mt-panel-header"><div><h2>Add expense</h2></div></div>
+      <form method="post" class="mt-panel-body mt-form-stack">
+        <label>Category<input name="category" placeholder="Transport, utilities..." required></label>
+        <label>Description<textarea name="description" rows="3"></textarea></label>
+        <label>Amount<input type="number" min="0.01" step="0.01" name="amount" required></label>
+        <label>Payment method<select name="payment_method"><option>CASH</option><option>MOBILE_MONEY</option><option>CARD</option><option>BANK</option></select></label>
+        <button class="mt-btn mt-btn-primary mt-btn-lg">Record expense</button>
+      </form>
+    </article>
+  </div>
+</section>
