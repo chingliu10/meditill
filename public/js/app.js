@@ -208,12 +208,35 @@
     if(url.origin!==window.location.origin)return;
 
     event.preventDefault();
+
+    if(link.classList.contains('mt-period-chip')){
+      const strip=link.closest('.mt-period-strip');
+      strip?.querySelectorAll('.mt-period-chip').forEach(item=>item.classList.toggle('is-active',item===link));
+      const params=url.searchParams;
+      const form=document.querySelector('form[data-ajax-filter][data-ajax-target="'+targetName+'"]');
+      if(form){
+        for(const key of ['period','days']){
+          if(params.has(key)){
+            const field=form.querySelector('[name="'+key+'"]');
+            if(field)field.value=params.get(key);
+          }
+        }
+      }
+    }
+
+    if(link.classList.contains('mt-search-clear')){
+      const form=document.querySelector('form[data-ajax-filter][data-ajax-target="'+targetName+'"]');
+      const input=form?.querySelector('input[name="q"],input[name="stock_q"],input[name="batch_q"]');
+      if(input)input.value='';
+    }
+
     loadAjaxResults(url,targetName);
   });
 
   window.addEventListener('popstate',()=>{
     const targetName=history.state?.ajaxTarget;
     if(targetName)loadAjaxResults(new URL(window.location.href),targetName,{push:false});
+    else window.location.reload();
   });
 
   document.addEventListener('change',async event=>{
