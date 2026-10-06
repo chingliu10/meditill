@@ -99,6 +99,7 @@
 
   const ajaxControllers=new Map();
   const debounceTimers=new WeakMap();
+  const ajaxSkeletonSnapshots=new WeakMap();
 
   function ajaxFormUrl(form){
     const url=new URL(form.getAttribute('action')||window.location.pathname,window.location.origin);
@@ -110,6 +111,67 @@
   function ajaxTargetSelector(name){
     const safe=window.CSS?.escape?CSS.escape(name):String(name).replaceAll('"','\\"');
     return '[data-ajax-results="'+safe+'"]';
+  }
+
+  function skeletonLineWidth(rowIndex,columnIndex){
+    const widths=[78,56,68,44,72,61,82,50];
+    return widths[(rowIndex+columnIndex)%widths.length]+'%';
+  }
+
+  function showAjaxSkeleton(container){
+    const tables=[...container.querySelectorAll('.mt-table')];
+    if(!tables.length)return;
+
+    if(!ajaxSkeletonSnapshots.has(container)){
+      ajaxSkeletonSnapshots.set(container,tables.map(table=>{
+        const tbody=table.querySelector('tbody');
+        return tbody?{table,tbody,html:tbody.innerHTML}:null;
+      }).filter(Boolean));
+    }
+
+    tables.forEach(table=>{
+      const tbody=table.querySelector('tbody');
+      if(!tbody)return;
+
+      const headers=[...table.querySelectorAll('thead th')];
+      const columnCount=Math.max(headers.length,tbody.querySelector('tr')?.children.length||1);
+      const fragment=document.createDocumentFragment();
+
+      for(let rowIndex=0;rowIndex<8;rowIndex+=1){
+        const row=document.createElement('tr');
+        row.className='mt-skeleton-row';
+        row.setAttribute('aria-hidden','true');
+
+        for(let columnIndex=0;columnIndex<columnCount;columnIndex+=1){
+          const cell=document.createElement('td');
+          cell.className='mt-skeleton-cell';
+          const label=headers[columnIndex]?.textContent?.trim();
+          if(label)cell.dataset.label=label;
+
+          const line=document.createElement('span');
+          line.className='mt-skeleton-line';
+          line.style.setProperty('--mt-skeleton-width',skeletonLineWidth(rowIndex,columnIndex));
+          cell.appendChild(line);
+          row.appendChild(cell);
+        }
+
+        fragment.appendChild(row);
+      }
+
+      tbody.replaceChildren(fragment);
+      table.setAttribute('aria-busy','true');
+    });
+  }
+
+  function restoreAjaxSkeleton(container){
+    const snapshots=ajaxSkeletonSnapshots.get(container);
+    if(!snapshots)return;
+
+    snapshots.forEach(({table,tbody,html})=>{
+      if(tbody.isConnected)tbody.innerHTML=html;
+      table.removeAttribute('aria-busy');
+    });
+    ajaxSkeletonSnapshots.delete(container);
   }
 
   async function loadAjaxResults(url,targetName,{push=true}={}){
@@ -127,6 +189,8 @@
     const selectionEnd=activeName&&typeof active.selectionEnd==='number'?active.selectionEnd:null;
 
     current.classList.add('is-ajax-loading');
+    current.setAttribute('aria-busy','true');
+    showAjaxSkeleton(current);
 
     try{
       const response=await fetch(url,{
@@ -143,6 +207,7 @@
       const incoming=doc.querySelector(selector);
       if(!incoming)throw new Error('Filtered results were not found');
 
+      ajaxSkeletonSnapshots.delete(current);
       current.replaceWith(incoming);
       decorateTables(incoming);
 
@@ -160,10 +225,17 @@
         history.pushState({ajaxTarget:targetName},'',url.pathname+url.search);
       }
     }catch(error){
-      if(error.name!=='AbortError')showToast(error.message||'Could not load results','error');
+      if(error.name!=='AbortError'){
+        restoreAjaxSkeleton(current);
+        showToast(error.message||'Could not load results','error');
+      }
     }finally{
-      if(ajaxControllers.get(targetName)===controller)ajaxControllers.delete(targetName);
-      document.querySelector(selector)?.classList.remove('is-ajax-loading');
+      if(ajaxControllers.get(targetName)===controller){
+        ajaxControllers.delete(targetName);
+        const live=document.querySelector(selector);
+        live?.classList.remove('is-ajax-loading');
+        live?.removeAttribute('aria-busy');
+      }
     }
   }
 
