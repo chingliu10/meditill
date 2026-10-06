@@ -1,0 +1,42 @@
+<section class="mt-page">
+  <div class="mt-page-header">
+    <div>
+      <p class="mt-eyebrow">ACCOUNT</p>
+      <h1>My profile</h1>
+      <p>Manage the name shown across MediTill.</p>
+    </div>
+  </div>
+
+  <article class="mt-panel mt-form-panel mt-form-narrow">
+    <div class="mt-panel-header">
+      <div>
+        <h2>Personal details</h2>
+        <p>Your username is fixed and used for sign-in.</p>
+      </div>
+    </div>
+
+    <form method="post" class="mt-panel-body mt-form-stack">
+      <label>
+        Display name
+        <input name="name" value="{{profile.name}}" maxlength="160" required autocomplete="name">
+      </label>
+
+      <label>
+        Username
+        <input value="{{profile.username}}" disabled>
+      </label>
+
+      <label>
+        Email
+        <input value="{{profile.email}}" disabled>
+      </label>
+
+      <label>
+        Phone
+        <input value="{{profile.phone}}" disabled>
+      </label>
+
+      <button class="mt-btn mt-btn-primary mt-btn-lg">Save profile</button>
+    </form>
+  </article>
+</section>
