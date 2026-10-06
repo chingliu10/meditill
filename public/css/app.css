@@ -1240,3 +1240,12 @@ button.mt-status{cursor:pointer}
   background:var(--mt-primary-soft);
   color:var(--mt-primary-dark);
 }
+
+
+/* AJAX-filtered list feedback */
+[data-ajax-results]{
+  transition:opacity .14s ease;
+}
+[data-ajax-results].is-ajax-loading{
+  opacity:.55;
+}
