@@ -7,16 +7,17 @@
     <a class="is-active" href="/reports/profit-loss">P&amp;L</a>
   </div>
 
+  <div data-ajax-results="report-pnl">
   <div class="mt-page-header">
     <div>
       <p class="mt-eyebrow">REPORTS</p>
       <h1>Operational Profit &amp; Loss</h1>
       <p>Net sales, historical batch cost and recorded operating expenses for {{currentBranch.name}}.</p>
     </div>
-    <form method="get">
+    <form method="get" data-ajax-filter data-ajax-target="report-pnl">
       <label class="d-flex flex-column gap-1">
         <small>Period</small>
-        <select name="period" class="mt-branch-select" onchange="this.form.submit()">
+        <select name="period" class="mt-branch-select">
           <option value="today" {{#if periodToday}}selected{{/if}}>Today</option>
           <option value="yesterday" {{#if periodYesterday}}selected{{/if}}>Yesterday</option>
           <option value="7d" {{#if period7d}}selected{{/if}}>Last 7 Days</option>
@@ -76,4 +77,5 @@
   </article>
 
   <p class="mt-cell-sub">Operational P&amp;L only. A future accounting module can extend this into a ledger-based financial statement with accruals, payroll, depreciation, interest, tax and other accounting adjustments.</p>
+  </div>
 </section>
