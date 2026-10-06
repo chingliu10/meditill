@@ -3,20 +3,48 @@
     <div><p class="mt-eyebrow">CONTACTS</p><h1>Customers</h1><p>Archive named customers without deleting their sales history.</p></div>
     <a class="mt-btn mt-btn-secondary" href="/customers{{#unless showArchived}}?archived=1{{/unless}}">{{#if showArchived}}Hide archived{{else}}Show archived{{/if}}</a>
   </div>
+
   <div class="mt-two-column">
     <article class="mt-panel">
-      <div class="mt-panel-header"><div><h2>Customer list</h2><p>Search by name, phone or email</p></div></div>
+      <div class="mt-panel-header"><div><h2>Customer list</h2><p>25 customers per page</p></div></div>
       <div class="mt-panel-body">
         <form class="mt-search-form" method="get">
           {{#if showArchived}}<input type="hidden" name="archived" value="1">{{/if}}
-          <span class="mt-search-icon">⌕</span><input name="q" value="{{q}}" placeholder="Search customers"><button class="mt-btn mt-btn-primary">Search</button>
+          <span class="mt-search-icon">⌕</span>
+          <input name="q" value="{{q}}" placeholder="Search name, phone or email">
+          {{#if q}}<a href="/customers{{#if showArchived}}?archived=1{{/if}}" class="mt-search-clear">×</a>{{/if}}
+          <button class="mt-btn mt-btn-primary">Search</button>
         </form>
       </div>
-      <div class="mt-table-wrap"><table class="mt-table mt-table-compact"><thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-      {{#each customers}}<tr><td><strong>{{name}}</strong></td><td>{{#if phone}}{{phone}}{{else}}—{{/if}}</td><td>{{#if email}}{{email}}{{else}}—{{/if}}</td><td>{{#if is_walk_in}}<span class="mt-status mt-status-info">Walk-in</span>{{else}}{{#if active}}<span class="mt-status mt-status-success">Active</span>{{else}}<span class="mt-status mt-status-danger">Archived</span>{{/if}}{{/if}}</td><td><div class="mt-row-actions">{{#unless is_walk_in}}{{#if active}}<form class="mt-inline-form" method="post" action="/customers/{{id}}/archive" data-confirm-form data-confirm-title="Archive customer?" data-confirm-message="The customer will disappear from normal customer search, but previous sales remain intact."><button class="mt-btn mt-btn-xs mt-btn-ghost-danger">Archive</button></form>{{else}}<form class="mt-inline-form" method="post" action="/customers/{{id}}/restore"><button class="mt-btn mt-btn-xs mt-btn-ghost-success">Restore</button></form>{{/if}}{{else}}<span class="mt-cell-sub">System customer</span>{{/unless}}</div></td></tr>
-      {{else}}<tr><td colspan="5"><div class="mt-empty-state">No customers found.</div></td></tr>{{/each}}
-      </tbody></table></div>
+      <div class="mt-table-wrap">
+        <table class="mt-table mt-table-compact">
+          <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+          {{#each customers}}
+            <tr>
+              <td><strong>{{name}}</strong></td>
+              <td>{{#if phone}}{{phone}}{{else}}—{{/if}}</td>
+              <td>{{#if email}}{{email}}{{else}}—{{/if}}</td>
+              <td>{{#if is_walk_in}}<span class="mt-status mt-status-info">Walk-in</span>{{else}}{{#if active}}<span class="mt-status mt-status-success">Active</span>{{else}}<span class="mt-status mt-status-danger">Archived</span>{{/if}}{{/if}}</td>
+              <td><div class="mt-row-actions">{{#unless is_walk_in}}{{#if active}}<form class="mt-inline-form" method="post" action="/customers/{{id}}/archive" data-confirm-form data-confirm-title="Archive customer?" data-confirm-message="The customer will disappear from normal customer search, but previous sales remain intact."><button class="mt-btn mt-btn-xs mt-btn-ghost-danger">Archive</button></form>{{else}}<form class="mt-inline-form" method="post" action="/customers/{{id}}/restore"><button class="mt-btn mt-btn-xs mt-btn-ghost-success">Restore</button></form>{{/if}}{{else}}<span class="mt-cell-sub">System customer</span>{{/unless}}</div></td>
+            </tr>
+          {{else}}
+            <tr><td colspan="5"><div class="mt-empty-state">No customers found.</div></td></tr>
+          {{/each}}
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-pagination-bar">
+        <div class="mt-pagination-summary">{{#if pagination.totalRows}}Showing <strong>{{pagination.firstRow}}–{{pagination.lastRow}}</strong> of <strong>{{pagination.totalRows}}</strong>{{else}}0 customers{{/if}}</div>
+        <nav class="mt-pagination">
+          {{#if pagination.hasPrevious}}<a class="mt-page-link" href="{{pagination.previousUrl}}">‹ Previous</a>{{else}}<span class="mt-page-link is-disabled">‹ Previous</span>{{/if}}
+          {{#each pagination.pageLinks}}<a class="mt-page-link mt-page-number {{#if active}}is-active{{/if}}" href="{{url}}">{{value}}</a>{{/each}}
+          {{#if pagination.hasNext}}<a class="mt-page-link" href="{{pagination.nextUrl}}">Next ›</a>{{else}}<span class="mt-page-link is-disabled">Next ›</span>{{/if}}
+        </nav>
+        <div class="mt-pagination-page">Page {{pagination.page}} of {{pagination.totalPages}} · 25 rows</div>
+      </div>
     </article>
+
     <article class="mt-panel mt-form-panel">
       <div class="mt-panel-header"><div><h2>Add customer</h2><p>Optional for normal cash sales</p></div></div>
       <form method="post" action="/customers" class="mt-panel-body mt-form-stack">
