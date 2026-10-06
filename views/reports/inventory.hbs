@@ -6,7 +6,19 @@
     <a href="/reports/expiry">Expiry</a>
     <a href="/reports/profit-loss">P&amp;L</a>
   </div>
+
   <div class="mt-page-header"><div><p class="mt-eyebrow">REPORTS</p><h1>Inventory valuation</h1></div></div>
+
+  <div class="mt-toolbar">
+    <form class="mt-search-form" method="get">
+      <span class="mt-search-icon">⌕</span>
+      <input name="q" value="{{q}}" placeholder="Search medicine, generic or strength">
+      {{#if q}}<a href="/reports/inventory" class="mt-search-clear">×</a>{{/if}}
+      <button class="mt-btn mt-btn-primary">Search</button>
+    </form>
+    <span class="mt-toolbar-meta">25 rows per page</span>
+  </div>
+
   <article class="mt-panel mt-panel-flush">
     <div class="mt-table-wrap">
       <table class="mt-table">
@@ -14,9 +26,18 @@
         <tbody>
           {{#each rows}}
           <tr><td><strong>{{name}} {{strength}}</strong></td><td>{{unit_name}}</td><td>{{quantity quantity}}</td><td><strong>TZS {{money value}}</strong></td></tr>
-          {{/each}}
+          {{else}}<tr><td colspan="4"><div class="mt-empty-state">No inventory rows found.</div></td></tr>{{/each}}
         </tbody>
       </table>
+    </div>
+    <div class="mt-pagination-bar">
+      <div class="mt-pagination-summary">{{#if pagination.totalRows}}Showing <strong>{{pagination.firstRow}}–{{pagination.lastRow}}</strong> of <strong>{{pagination.totalRows}}</strong>{{else}}0 rows{{/if}}</div>
+      <nav class="mt-pagination">
+        {{#if pagination.hasPrevious}}<a class="mt-page-link" href="{{pagination.previousUrl}}">‹ Previous</a>{{else}}<span class="mt-page-link is-disabled">‹ Previous</span>{{/if}}
+        {{#each pagination.pageLinks}}<a class="mt-page-link mt-page-number {{#if active}}is-active{{/if}}" href="{{url}}">{{value}}</a>{{/each}}
+        {{#if pagination.hasNext}}<a class="mt-page-link" href="{{pagination.nextUrl}}">Next ›</a>{{else}}<span class="mt-page-link is-disabled">Next ›</span>{{/if}}
+      </nav>
+      <div class="mt-pagination-page">Page {{pagination.page}} of {{pagination.totalPages}} · 25 rows</div>
     </div>
   </article>
 </section>
