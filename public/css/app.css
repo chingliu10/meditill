@@ -1243,9 +1243,34 @@ button.mt-status{cursor:pointer}
 
 
 /* AJAX-filtered list feedback */
-[data-ajax-results]{
-  transition:opacity .14s ease;
-}
 [data-ajax-results].is-ajax-loading{
+  cursor:progress;
+}
+[data-ajax-results].is-ajax-loading .mt-pagination-bar{
   opacity:.55;
+  pointer-events:none;
+}
+.mt-skeleton-row:hover{
+  background:transparent!important;
+}
+.mt-skeleton-cell{
+  pointer-events:none;
+}
+.mt-skeleton-line{
+  display:block;
+  width:var(--mt-skeleton-width,70%);
+  max-width:190px;
+  min-width:44px;
+  height:12px;
+  border-radius:999px;
+  background:linear-gradient(90deg,#edf1f4 25%,#f8fafc 50%,#edf1f4 75%);
+  background-size:200% 100%;
+  animation:mt-skeleton-shimmer 1.15s ease-in-out infinite;
+}
+@keyframes mt-skeleton-shimmer{
+  0%{background-position:200% 0}
+  100%{background-position:-200% 0}
+}
+@media(prefers-reduced-motion:reduce){
+  .mt-skeleton-line{animation:none}
 }
