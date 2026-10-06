@@ -9,6 +9,7 @@ const env = require('./config/env');
 const { pool } = require('./config/db');
 const { exposeUser } = require('./middleware/auth.middleware');
 const { exposeFlash } = require('./middleware/flash.middleware');
+const { normalizeInput } = require('./middleware/normalize-input.middleware');
 const { notFound,errorHandler } = require('./middleware/error.middleware');
 
 const app = express();
@@ -57,6 +58,7 @@ app.use(helmet({contentSecurityPolicy:false}));
 app.use(compression());
 app.use(express.urlencoded({extended:true}));
 app.use(express.json({limit:'1mb'}));
+app.use(normalizeInput);
 app.use(express.static(path.join(__dirname,'..','public')));
 
 app.use(session({
