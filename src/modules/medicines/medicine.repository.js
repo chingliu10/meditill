@@ -34,10 +34,12 @@ async function list(db,organizationId,q='',branchId=null,page=1,pageSize=25){
   return {rows,total};
 }
 
-async function search(db,organizationId,q='',branchId=null,limit=60){
+async function search(db,organizationId,q='',branchId=null,limit=25){
   const query=String(q||'').trim();
   const term=`%${query}%`;
-  const safeLimit=Math.min(100,Math.max(1,Number(limit)||60));
+  const prefix=`${query}%`;
+  const safeLimit=Math.min(25,Math.max(1,Number(limit)||25));
+
   const {rows}=await db.query(
     `SELECT m.id,m.name,m.generic_name,m.brand_name,m.strength,m.dosage_form,m.sku,m.default_selling_price,m.reorder_level,m.image_path,
        c.name category,u.name unit_name,u.symbol unit,COALESCE(u.allow_fraction,false) allow_fraction,
@@ -47,7 +49,20 @@ async function search(db,organizationId,q='',branchId=null,limit=60){
          FROM medicine_batches b
          WHERE b.medicine_id=m.id AND b.branch_id=$4 AND b.status='SALEABLE'
            AND b.quantity_available>0 AND (b.expiry_date IS NULL OR b.expiry_date>=current_date)
-       ),0) END saleable_stock
+       ),0) END saleable_stock,
+       CASE
+         WHEN $2='' THEN 50
+         WHEN EXISTS(SELECT 1 FROM medicine_barcodes mb WHERE mb.medicine_id=m.id AND mb.barcode=$2) THEN 0
+         WHEN EXISTS(SELECT 1 FROM medicine_units mu WHERE mu.medicine_id=m.id AND mu.active=true AND mu.barcode=$2) THEN 0
+         WHEN COALESCE(m.sku,'') ILIKE $2 THEN 1
+         WHEN m.name ILIKE $2 THEN 2
+         WHEN COALESCE(m.generic_name,'') ILIKE $2 THEN 3
+         WHEN COALESCE(m.brand_name,'') ILIKE $2 THEN 4
+         WHEN m.name ILIKE $6 THEN 5
+         WHEN COALESCE(m.generic_name,'') ILIKE $6 THEN 6
+         WHEN COALESCE(m.brand_name,'') ILIKE $6 THEN 7
+         ELSE 20
+       END relevance
      FROM medicines m
      LEFT JOIN categories c ON c.id=m.category_id
      LEFT JOIN units u ON u.id=m.base_unit_id
@@ -55,9 +70,16 @@ async function search(db,organizationId,q='',branchId=null,limit=60){
        AND ($2='' OR m.name ILIKE $3 OR COALESCE(m.generic_name,'') ILIKE $3 OR COALESCE(m.brand_name,'') ILIKE $3 OR COALESCE(m.sku,'') ILIKE $3
          OR EXISTS(SELECT 1 FROM medicine_barcodes mb WHERE mb.medicine_id=m.id AND mb.barcode ILIKE $3)
          OR EXISTS(SELECT 1 FROM medicine_units mu WHERE mu.medicine_id=m.id AND mu.active=true AND mu.barcode ILIKE $3))
-     ORDER BY m.name
+     ORDER BY relevance,
+       CASE WHEN $4::bigint IS NULL THEN 0 ELSE COALESCE((
+         SELECT SUM(b.quantity_available)
+         FROM medicine_batches b
+         WHERE b.medicine_id=m.id AND b.branch_id=$4 AND b.status='SALEABLE'
+           AND b.quantity_available>0 AND (b.expiry_date IS NULL OR b.expiry_date>=current_date)
+       ),0) END DESC,
+       m.name
      LIMIT $5`,
-    [organizationId,query,term,branchId,safeLimit]
+    [organizationId,query,term,branchId,safeLimit,prefix]
   );
   return rows;
 }
