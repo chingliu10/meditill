@@ -7,6 +7,7 @@
 
   let rowIndex=0;
   let supplierTimer;
+  let supplierSearchController=null;
 
   function escapeHtml(value){
     return String(value??'')
@@ -63,13 +64,20 @@
     supplierId.value='';
     clearTimeout(supplierTimer);
     supplierTimer=setTimeout(async()=>{
+      supplierSearchController?.abort();
+      supplierSearchController=new AbortController();
+
       try{
-        const items=await fetchJson('/suppliers/api/search?q='+encodeURIComponent(supplierSearch.value.trim()));
-        renderSupplierResults(items);
+        const response=await fetch('/suppliers/api/search?q='+encodeURIComponent(supplierSearch.value.trim()),{
+          headers:{accept:'application/json'},
+          signal:supplierSearchController.signal
+        });
+        if(!response.ok)throw new Error('Search failed');
+        renderSupplierResults(await response.json());
       }catch(error){
-        window.MediTillToast?.(error.message,'error');
+        if(error.name!=='AbortError')window.MediTillToast?.(error.message,'error');
       }
-    },220);
+    },350);
   });
 
   supplierSearch?.addEventListener('focus',()=>{
@@ -106,14 +114,23 @@
     const unit=tr.querySelector('.medicine-unit');
 
     let timer;
+    let medicineSearchController=null;
 
     async function searchMedicines(){
       idInput.value='';
       clearTimeout(timer);
 
       timer=setTimeout(async()=>{
+        medicineSearchController?.abort();
+        medicineSearchController=new AbortController();
+
         try{
-          const items=await fetchJson('/medicines/api/search?q='+encodeURIComponent(searchInput.value.trim()));
+          const response=await fetch('/medicines/api/search?q='+encodeURIComponent(searchInput.value.trim()),{
+            headers:{accept:'application/json'},
+            signal:medicineSearchController.signal
+          });
+          if(!response.ok)throw new Error('Search failed');
+          const items=await response.json();
           results.innerHTML='';
 
           if(!items.length){
@@ -121,7 +138,7 @@
             return openMenu(results);
           }
 
-          items.slice(0,20).forEach(item=>{
+          items.slice(0,25).forEach(item=>{
             const button=document.createElement('button');
             button.type='button';
             button.className='mt-picker-item';
@@ -145,9 +162,9 @@
 
           openMenu(results);
         }catch(error){
-          window.MediTillToast?.(error.message,'error');
+          if(error.name!=='AbortError')window.MediTillToast?.(error.message,'error');
         }
-      },220);
+      },350);
     }
 
     searchInput.addEventListener('input',searchMedicines);
