@@ -10,16 +10,16 @@
   <div class="mt-page-header"><div><p class="mt-eyebrow">REPORTS</p><h1>Inventory valuation</h1></div></div>
 
   <div class="mt-toolbar">
-    <form class="mt-search-form" method="get" data-debounce-search="350">
+    <form class="mt-search-form" method="get" data-debounce-search="350" data-ajax-filter data-ajax-target="report-inventory">
       <span class="mt-search-icon">⌕</span>
       <input name="q" value="{{q}}" placeholder="Search medicine, generic or strength">
-      {{#if q}}<a href="/reports/inventory" class="mt-search-clear">×</a>{{/if}}
+      {{#if q}}<a href="/reports/inventory" class="mt-search-clear" data-ajax-target="report-inventory">×</a>{{/if}}
       <button class="mt-btn mt-btn-primary">Search</button>
     </form>
     <span class="mt-toolbar-meta">25 rows per page</span>
   </div>
 
-  <article class="mt-panel mt-panel-flush">
+  <article class="mt-panel mt-panel-flush" data-ajax-results="report-inventory">
     <div class="mt-table-wrap">
       <table class="mt-table">
         <thead><tr><th>Medicine</th><th>Unit</th><th>Quantity</th><th>Stock value</th></tr></thead>
