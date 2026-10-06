@@ -29,15 +29,29 @@ async function list(db,organizationId,q='',includeInactive=false,page=1,pageSize
 async function search(db,organizationId,q=''){
   const query=String(q||'').trim();
   const term=`%${query}%`;
+  const prefix=`${query}%`;
   const {rows}=await db.query(
     `SELECT id,name,phone,email,address,is_walk_in,active,created_at
      FROM customers
      WHERE organization_id=$1
        AND active=true
        AND ($2='' OR name ILIKE $3 OR COALESCE(phone,'') ILIKE $3 OR COALESCE(email,'') ILIKE $3)
-     ORDER BY is_walk_in DESC,name
-     LIMIT 20`,
-    [organizationId,query,term]
+     ORDER BY
+       CASE
+         WHEN $2='' AND is_walk_in THEN 0
+         WHEN $2='' THEN 50
+         WHEN COALESCE(phone,'')=$2 THEN 0
+         WHEN lower(COALESCE(email,''))=lower($2) THEN 0
+         WHEN lower(name)=lower($2) THEN 1
+         WHEN name ILIKE $4 THEN 2
+         WHEN COALESCE(phone,'') ILIKE $4 THEN 3
+         WHEN COALESCE(email,'') ILIKE $4 THEN 4
+         ELSE 20
+       END,
+       is_walk_in DESC,
+       name
+     LIMIT 25`,
+    [organizationId,query,term,prefix]
   );
   return rows;
 }
