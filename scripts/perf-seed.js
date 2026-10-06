@@ -195,11 +195,11 @@ async function seed(){
               0,0,0,0,'RECEIVED',
               CASE m.perf_index%3 WHEN 0 THEN 'PAID' WHEN 1 THEN 'PARTIAL' ELSE 'UNPAID' END,
               'Synthetic performance purchase',
-              $5,
+              $4,
               now()-(((m.perf_index-1)%365)||' days')::interval
        FROM perf_med_map m
        JOIN ranked_suppliers s ON s.rn=((m.perf_index-1)%$3)+1`,
-      [organization.id,branch.id,SUPPLIERS,MEDICINES,user.id]
+      [organization.id,branch.id,SUPPLIERS,user.id]
     );
 
     await client.query(
