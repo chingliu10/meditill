@@ -27,13 +27,29 @@ async function list(db,organizationId,q='',includeInactive=false,page=1,pageSize
 }
 
 async function search(db,organizationId,q=''){
-  const term=`%${String(q||'').trim()}%`;
+  const query=String(q||'').trim();
+  const term=`%${query}%`;
+  const prefix=`${query}%`;
   const {rows}=await db.query(
-    `SELECT id,name,contact_person,phone,email FROM suppliers
+    `SELECT id,name,contact_person,phone,email
+     FROM suppliers
      WHERE organization_id=$1 AND active=true
-       AND ($2='' OR name ILIKE $3 OR COALESCE(contact_person,'') ILIKE $3 OR COALESCE(phone,'') ILIKE $3)
-     ORDER BY name LIMIT 20`,
-    [organizationId,String(q||'').trim(),term]
+       AND ($2='' OR name ILIKE $3 OR COALESCE(contact_person,'') ILIKE $3 OR COALESCE(phone,'') ILIKE $3 OR COALESCE(email,'') ILIKE $3)
+     ORDER BY
+       CASE
+         WHEN $2='' THEN 50
+         WHEN COALESCE(phone,'')=$2 THEN 0
+         WHEN lower(COALESCE(email,''))=lower($2) THEN 0
+         WHEN lower(name)=lower($2) THEN 1
+         WHEN name ILIKE $4 THEN 2
+         WHEN COALESCE(contact_person,'') ILIKE $4 THEN 3
+         WHEN COALESCE(phone,'') ILIKE $4 THEN 4
+         WHEN COALESCE(email,'') ILIKE $4 THEN 5
+         ELSE 20
+       END,
+       name
+     LIMIT 25`,
+    [organizationId,query,term,prefix]
   );
   return rows;
 }
