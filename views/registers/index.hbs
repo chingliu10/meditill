@@ -54,7 +54,7 @@
 
         {{#if (can user "register.open")}}
           {{#if hasAvailableRegisters}}
-          <form id="openRegister" class="mt-panel-body mt-form-stack">
+          <form id="openRegister" class="mt-panel-body mt-form-stack" data-return-path="{{returnPath}}">
             <label>Register
               <select name="register_id" required>
                 {{#each availableRegisters}}
@@ -121,7 +121,7 @@
 </section>
 
 <script>
-const returnPath={{json returnPath}};
+const returnPath=document.querySelector('#openRegister')?.dataset.returnPath||'';
 
 async function postRegister(form,url,message){
   const response=await fetch(url,{
@@ -141,7 +141,7 @@ async function postRegister(form,url,message){
   sessionStorage.setItem('meditillToast',JSON.stringify({type:'success',message:toastMessage}));
 
   if(url.includes('/open')&&returnPath){
-    location.href=returnPath;
+    if(!window.MediTillPosFullscreen?.open(returnPath))location.href=returnPath;
     return;
   }
   location.reload();
@@ -149,7 +149,20 @@ async function postRegister(form,url,message){
 
 document.querySelector('#openRegister')?.addEventListener('submit',event=>{
   event.preventDefault();
-  postRegister(event.target,'/registers/api/open','Register opened successfully.').catch(error=>MediTillToast(error.message,'error'));
+  const form=event.target;
+  const submit=form.querySelector('button[type="submit"],button:not([type])');
+  if(submit.disabled)return;
+  const fullscreen=window.MediTillPosFullscreen;
+  const wasFullscreen=fullscreen?.isFullscreen();
+  const toPos=/^\/pos\/?(?:[?#]|$)/.test(returnPath);
+  const entering=toPos&&fullscreen?fullscreen.enter().catch(()=>{}):Promise.resolve();
+  submit.disabled=true;
+  postRegister(form,'/registers/api/open','Register opened successfully.').catch(async error=>{
+    await entering;
+    if(toPos&&!wasFullscreen&&document.fullscreenElement)await document.exitFullscreen().catch(()=>{});
+    submit.disabled=false;
+    MediTillToast(error.message,'error');
+  });
 });
 
 document.querySelector('#closeRegister')?.addEventListener('submit',event=>{

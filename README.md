@@ -102,6 +102,38 @@ npm start
 
 Seed username: `admin`.
 
+## POS fullscreen
+
+All same-tab POS links (top bar, sidebar, mobile navigation and Continue to POS)
+enter fullscreen during the click. Opening a register with a POS return path
+enters fullscreen during submission and keeps it through the API response.
+Escape or the fullscreen toggle can leave fullscreen without losing the cart.
+
+Browsers require user activation for the Fullscreen API. Direct URLs, bookmarks,
+new tabs, reloads and redirects therefore enter on the first click or keystroke
+inside POS when automatic entry is not permitted. Unsupported browsers remain
+usable windowed. Installed apps request the manifest's fullscreen display mode;
+support and fallback vary by browser.
+
+For **fullscreen immediately on startup, including direct links and reloads** on
+a Windows cashier PC, launch the POS in Microsoft Edge kiosk mode:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\open-pos-kiosk.ps1 -Url 'https://YOUR_HOST/pos'
+```
+
+Use `-PrintCommand` to inspect the launch command without opening the browser.
+The execution-policy override applies only to that PowerShell process.
+The launcher does not change Windows policies or other browser windows. Edge
+kiosk uses InPrivate mode, so sign in when starting a new kiosk session; close
+the kiosk window with Alt+F4. This is browser kiosk mode, not Windows lockdown.
+
+Run the focused fullscreen regression tests with `npm run test:pos-fullscreen`.
+
+References: [Fullscreen user activation](https://developer.mozilla.org/en-US/docs/Web/API/Element/requestFullscreen#security_considerations),
+[installed app display modes](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Manifest/Reference/display),
+[Microsoft Edge kiosk mode](https://learn.microsoft.com/en-us/deployedge/microsoft-edge-configure-kiosk-mode).
+
 ## Report demo data
 
 In an existing migrated test database, run this from `psql`:

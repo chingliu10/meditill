@@ -80,9 +80,57 @@
 .mt-terminal .mt-pos-change-preview strong{font-size:17px}
 .mt-terminal .mt-complete-sale{flex:none;position:static!important;min-height:48px;height:48px;font-size:15px;border-radius:5px}
 .mt-terminal .mt-mobile-cart-bar,.mt-terminal .mt-mobile-cart-backdrop,.mt-terminal .mt-mobile-cart-close{display:none}
+.mt-terminal .mt-cart-line{grid-template-columns:minmax(0,1fr);gap:6px}
+.mt-terminal .mt-cart-line>b{text-align:right;font-size:14px}
+.mt-terminal .mt-cart-line-main strong{font-size:14px;display:block}
+.mt-terminal .mt-cart-line-main small{font-size:12px}
+.mt-cart-strength{display:block;color:#3d5660;font-size:13px;line-height:1.4;margin:3px 0}
+.mt-terminal .mt-qty{display:flex;flex-wrap:wrap;gap:4px}
+.mt-terminal .mt-qty button{width:44px;height:44px;flex:none}
+.mt-terminal .mt-qty input{width:64px;height:44px;min-width:0;padding:5px;text-align:center;font-size:15px;border:1px solid #b8c9d1;border-radius:4px}
+.mt-terminal .mt-customer-picker>input:not([type=hidden]){height:44px;min-height:44px;font-size:14px}
+.mt-terminal .mt-customer-picker label,.mt-terminal .mt-payment-box label{font-size:13px}
+.mt-terminal .mt-clear-sale{height:44px;min-height:44px;font-size:13px}
+.mt-category-select{width:100%;height:44px;min-height:44px;flex:none;margin-bottom:10px;border:1px solid #b8c9d1;border-radius:4px;background:#fff;padding:8px 10px;font-size:14px;color:#263746}
+.mt-catalog-toolbar{font-size:13px;margin-bottom:4px;flex-wrap:wrap}
+.mt-stock-filter{min-height:44px;font-size:13px;white-space:normal}
+.mt-stock-filter input{width:18px;height:18px;flex:none}
+.mt-terminal .mt-product-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))!important;grid-auto-rows:minmax(234px,max-content);align-items:stretch;gap:10px}
+.mt-medicine-tile{display:flex;flex-direction:column;min-width:0;background:#fff;border:1px solid #c6d4db;border-radius:6px;overflow:hidden}
+.mt-product-add{display:grid;grid-template-columns:44px minmax(0,1fr);gap:6px 8px;flex:1;width:100%;border:0;background:#fff;color:#21353b;padding:12px;text-align:left;cursor:pointer;align-content:start}
+.mt-product-add:hover{background:#eef8f4}
+.mt-product-add:disabled{background:#f4f5f6;color:#66747b;cursor:not-allowed}
+.mt-product-add img{width:44px;height:44px;object-fit:contain;grid-column:1;grid-row:1/3;background:#f4f7f8;border-radius:4px}
+.mt-terminal .mt-product-add .mt-pos-product-name{grid-column:2;grid-row:1;display:block;font-size:14px!important;line-height:1.4;overflow:visible;overflow-wrap:anywhere;-webkit-line-clamp:unset}
+.mt-product-strength{grid-column:2;grid-row:2;font-size:13px;line-height:1.4;font-weight:700;overflow-wrap:anywhere;color:#335c67}
+.mt-product-add>small{grid-column:1/-1;font-size:12px;line-height:1.4;overflow-wrap:anywhere;color:#54656e}
+.mt-product-price{grid-column:1/-1;font-size:15px;line-height:1.4;overflow-wrap:anywhere}
+.mt-product-stock{grid-column:1/-1;font-size:12px;color:#455d64;line-height:1.4;overflow-wrap:anywhere}
+.mt-product-unit{height:44px;min-height:44px;width:calc(100% - 16px);margin:0 8px 8px;border:1px solid #b8c9d1;border-radius:4px;padding:6px;font-size:13px;background:#fff;color:#263746}
+.mt-product-unit-label{display:block;padding:6px 12px 12px;font-size:13px;color:#54656e;line-height:1.4;overflow-wrap:anywhere}
+.mt-catalog-pages{display:flex;justify-content:center;align-items:center;gap:12px;flex:none;min-height:52px;font-size:13px}
+.mt-catalog-pages button{width:44px;height:44px;border:1px solid #b8c9d1;border-radius:4px;background:#fff;font-size:22px;cursor:pointer}
+.mt-catalog-pages button:disabled{opacity:.4;cursor:default}
+.mt-terminal .mt-payment-methods button,.mt-cash-presets button{min-height:44px;height:44px;font-size:13px}
+.mt-payment-keypad{grid-template-rows:repeat(4,minmax(44px,1fr));min-height:191px}
+.mt-terminal .mt-payment-box>input{height:44px;min-height:44px}
+.mt-terminal .mt-pos-change-preview.is-short{background:#fff0dc;color:#8c430b}
+.mt-terminal .mt-cart-error{display:block;color:#b42e39;margin-top:6px;font-weight:700}
+.mt-draft-notice{padding:8px;border-bottom:1px solid #e5c67e;background:#fff5d9;color:#6b470d;font-size:13px;line-height:1.5;flex:none}
+.mt-draft-notice div{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
+.mt-draft-notice button,.mt-draft-notice a{min-height:44px;padding:8px;border:1px solid #bca36f;border-radius:4px;background:#fff;color:#62420f;display:inline-flex;align-items:center;font-size:13px;cursor:pointer}
+.mt-terminal [hidden]{display:none!important}
+.mt-pos-dialog{margin:auto;padding:0;width:calc(100% - 32px);max-width:440px;max-height:calc(100dvh - 32px);border:0;border-radius:8px;background:#fff;color:#263746;overflow:auto;box-shadow:0 12px 48px #0004}
+.mt-pos-dialog:not([open]){display:none!important}
+.mt-pos-dialog::backdrop{background:rgb(20 32 35 / .55)}
+.mt-pos-dialog .mt-modal,.mt-pos-dialog .mt-sale-success-card{width:100%;max-width:none;margin:0;padding:24px;border-radius:8px;box-shadow:none}
+.mt-pos-dialog .mt-btn{min-height:44px}
+.mt-pos-dialog h2,.mt-pos-dialog h3{font-size:22px;line-height:1.3}
+.mt-pos-dialog .mt-sale-success-close{width:44px;height:44px;right:8px;top:8px}
+.mt-terminal input:focus-visible,.mt-terminal select:focus-visible{outline:2px solid #0f7f76;outline-offset:2px}
 @media(max-width:1100px){
   .mt-terminal .mt-pos-appbar-session>span:last-child{display:none}
-  .mt-terminal .mt-pos-grid{grid-template-columns:240px minmax(0,1fr) 230px!important}
+  .mt-terminal .mt-pos-grid{grid-template-columns:220px minmax(0,1fr) 220px!important}
   .mt-terminal .mt-pos-appbar-session{order:0;width:auto}
 }
 @media(min-width:701px) and (max-height:680px){
@@ -92,8 +140,8 @@
   .mt-payment-total>strong{font-size:23px}
   .mt-terminal .mt-payment-box{padding-top:8px;gap:5px}
   .mt-terminal .mt-payment-methods{grid-template-columns:repeat(4,minmax(0,1fr))}
-  .mt-terminal .mt-payment-methods button{font-size:10px;min-height:30px}
-  .mt-payment-keypad{min-height:138px}
+  .mt-terminal .mt-payment-methods button{font-size:12px;min-height:44px}
+  .mt-payment-keypad{min-height:191px}
 }
 @media(max-width:700px){
   .mt-terminal .mt-pos-appbar{height:54px;min-height:54px;padding:0 8px;gap:8px}
@@ -110,29 +158,35 @@
   .mt-terminal .mt-pos-grid{display:block!important}
   .mt-terminal .mt-pos-catalog{padding:8px!important;border-radius:0!important;height:100%!important}
   .mt-terminal .mt-pos-search input{font-size:14px}
-  .mt-terminal .mt-product-grid{grid-template-columns:repeat(auto-fill,minmax(136px,1fr))!important;padding-bottom:72px!important}
+  .mt-terminal .mt-product-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;padding-bottom:8px!important}
+  .mt-terminal .mt-catalog-pages{margin-bottom:64px}
+  .mt-terminal .mt-product-add{padding:9px;grid-template-columns:32px minmax(0,1fr);gap:5px}
+  .mt-terminal .mt-product-add img{width:32px;height:32px}
   .mt-terminal .mt-pos-cart,.mt-terminal .mt-pos-payment{display:none;position:static!important;transform:none!important;box-shadow:none;border-radius:0!important;width:auto;max-height:none;height:auto!important;padding:0 10px!important}
   .mt-terminal.mt-pos-cart-open .mt-pos-grid{display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:minmax(0,1fr) auto}
   .mt-terminal.mt-pos-cart-open .mt-pos-catalog{display:none}
   .mt-terminal.mt-pos-cart-open .mt-pos-cart{display:flex;overflow:hidden;border:0}
   .mt-terminal.mt-pos-cart-open .mt-pos-payment{display:flex;overflow:hidden;border-left:0;border-top:1px solid #dce3e8;padding:8px 10px!important}
   .mt-terminal .mt-cart-heading{padding:9px 0!important;margin:0!important}
-  .mt-terminal .mt-mobile-cart-close{display:grid;width:28px;height:28px;font-size:20px;border-radius:4px}
+  .mt-terminal .mt-mobile-cart-close{display:grid;width:44px;height:44px;font-size:20px;border-radius:4px}
   .mt-terminal .mt-customer-picker{margin-bottom:8px}
   .mt-terminal .mt-cart-summary{padding:7px 0}
-  .mt-terminal .mt-clear-sale{height:30px;margin-bottom:7px;font-size:11px}
+  .mt-terminal .mt-clear-sale{height:44px;margin-bottom:7px;font-size:13px}
   .mt-terminal .mt-payment-total{grid-template-columns:1fr auto;gap:2px 8px;border:0;padding:0 0 7px}
   .mt-terminal .mt-payment-total>strong{grid-column:2;grid-row:1/3;font-size:24px;align-self:center}
   .mt-terminal .mt-payment-total>small{grid-column:1}
   .mt-terminal .mt-payment-box{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:5px 8px;padding:0 0 7px;flex:none}
   .mt-terminal .mt-payment-box>label{display:none}
   .mt-terminal .mt-payment-methods{grid-column:1/-1;grid-template-columns:repeat(4,minmax(0,1fr))}
-  .mt-terminal .mt-payment-methods button{min-height:32px}
-  .mt-terminal .mt-payment-box>input{grid-column:1;grid-row:2;height:36px;min-height:36px;font-size:18px}
+  .mt-terminal .mt-payment-methods button{min-height:44px;height:44px;font-size:13px}
+  .mt-terminal .mt-payment-box>input{grid-column:1;grid-row:2;height:44px;min-height:44px;font-size:18px}
   .mt-terminal .mt-pos-change-preview{grid-column:2;grid-row:2;min-height:36px;padding:5px 8px}
   .mt-terminal .mt-cash-presets{grid-column:1/-1}
   .mt-terminal .mt-payment-keypad{display:none}
-  .mt-terminal .mt-complete-sale{height:42px;min-height:42px}
+  .mt-terminal .mt-complete-sale{height:44px;min-height:44px}
   .mt-terminal .mt-mobile-cart-bar{display:flex;position:fixed;left:8px;right:8px;bottom:8px;width:auto;height:52px;border-radius:5px;padding:10px 12px;z-index:30}
   .mt-terminal.mt-pos-cart-open .mt-mobile-cart-bar{display:none}
 }
+@media(min-width:701px) and (max-width:900px){.mt-terminal .mt-pos-grid{grid-template-columns:205px minmax(0,1fr) 205px!important}.mt-terminal .mt-pos-catalog{padding:8px}.mt-terminal .mt-product-grid{grid-template-columns:minmax(0,1fr)!important}.mt-terminal .mt-pos-payment,.mt-terminal .mt-pos-cart{padding-left:8px;padding-right:8px}}
+@media(min-width:701px) and (max-height:620px){.mt-terminal .mt-payment-box{gap:4px;padding:6px 0}.mt-terminal .mt-payment-total{padding-bottom:5px}.mt-terminal .mt-pos-payment{padding-top:7px;padding-bottom:7px}.mt-terminal .mt-pos-change-preview{min-height:36px;padding:5px}.mt-terminal .mt-payment-keypad{gap:4px;min-height:188px}.mt-terminal .mt-payment-box>label:first-child{display:none}}
+@media(max-width:700px) and (max-height:740px){.mt-terminal.mt-pos-cart-open .mt-pos-grid{grid-template-rows:minmax(400px,1fr) auto;overflow:auto}.mt-terminal.mt-pos-cart-open .mt-pos-cart{height:100%!important}.mt-terminal.mt-pos-cart-open .mt-pos-payment{min-height:254px}}

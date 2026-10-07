@@ -11,6 +11,8 @@
     "db:seed": "node database/seed.js",
     "db:create-owner": "node scripts/create-owner.js",
     "check": "node scripts/check-js.js",
+    "test:pos-fullscreen": "node --test scripts/tests/pos-fullscreen.test.js",
+    "test:pos-ux": "node --test scripts/tests/pos-ux.test.js",
     "smoke:core": "node scripts/core-smoke-status.js",
     "perf:seed": "node scripts/perf-seed.js",
     "perf:probe": "node scripts/perf-probe.js",

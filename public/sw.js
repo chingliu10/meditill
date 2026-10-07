@@ -1,4 +1,4 @@
-const CACHE='meditill-shell-v5';
+const CACHE='meditill-shell-v6';
 const SHELL=[
   '/offline.html',
   '/css/app.css',

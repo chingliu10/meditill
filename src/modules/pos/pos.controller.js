@@ -35,4 +35,12 @@ async function sale(req,res,next){
   }
 }
 
-module.exports={index,search,barcode,sale};
+async function catalog(req,res,next){
+  try{res.json(await service.catalog(req.query,{user:req.session.user,branch:req.branch}));}
+  catch(e){next(e);}
+}
+async function checkDraft(req,res,next){
+  try{res.json(await service.checkDraft(req.body,{user:req.session.user,branch:req.branch}));}
+  catch(e){next(e);}
+}
+module.exports={index,search,barcode,sale,catalog,checkDraft};

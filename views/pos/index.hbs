@@ -17,6 +17,10 @@
       </div>
 
       <div class="mt-receipt-columns"><span>Medicine / quantity</span><span>Amount</span></div>
+      <div id="posDraftNotice" class="mt-draft-notice" hidden role="status">
+        <span id="posDraftMessage"></span>
+        <div><a href="/sales" id="posReviewSales" hidden>Review sales</a><button type="button" id="posDraftRetry">Retry</button><button type="button" id="posDraftDiscard">Discard</button></div>
+      </div>
       <div id="cartLines" class="mt-cart-lines" aria-live="polite">
         <div class="mt-empty-state">No items</div>
       </div>
@@ -39,8 +43,9 @@
         <strong id="posProductCount" aria-live="polite">Medicines</strong>
         <label class="mt-stock-filter"><input type="checkbox" id="inStockOnly">In stock only</label>
       </div>
-      <div id="posCategories" class="mt-category-tabs" role="group" aria-label="Medicine categories"></div>
+      <select id="posCategories" class="mt-category-select" aria-label="Medicine category"><option value="">All medicines</option></select>
       <div id="products" class="mt-product-grid" aria-label="Medicine results"></div>
+      <nav class="mt-catalog-pages" aria-label="Medicine pages"><button type="button" id="posPreviousPage" title="Previous page" aria-label="Previous page" disabled>&larr;</button><span id="posPageCount">Page 1</span><button type="button" id="posNextPage" title="Next page" aria-label="Next page" disabled>&rarr;</button></nav>
     </section>
 
     <aside class="mt-pos-payment" id="posPayment" aria-label="Payment">
@@ -48,10 +53,10 @@
       <div class="mt-payment-box">
         <label>Payment method</label>
         <div class="mt-payment-methods">
-          <button type="button" data-method="CASH" class="is-active">Cash</button>
-          <button type="button" data-method="MOBILE_MONEY">Mobile</button>
-          <button type="button" data-method="CARD">Card</button>
-          <button type="button" data-method="BANK">Bank</button>
+          <button type="button" data-method="CASH" class="is-active" aria-pressed="true">Cash</button>
+          <button type="button" data-method="MOBILE_MONEY" aria-pressed="false">Mobile</button>
+          <button type="button" data-method="CARD" aria-pressed="false">Card</button>
+          <button type="button" data-method="BANK" aria-pressed="false">Bank</button>
         </div>
         <input type="hidden" id="paymentMethod" value="CASH">
 
@@ -71,7 +76,7 @@
         </div>
 
         <div class="mt-pos-change-preview">
-          <span>Change</span>
+          <span id="posChangeLabel">Change</span>
           <strong id="changePreview">TZS 0</strong>
         </div>
       </div>
@@ -93,11 +98,11 @@
   <span class="mt-mobile-cart-arrow">›</span>
 </button>
 
-<div class="mt-sale-success" id="saleSuccess" hidden>
+<dialog class="mt-pos-dialog" id="saleSuccess" aria-labelledby="saleSuccessTitle">
   <div class="mt-sale-success-card">
     <button type="button" id="saleSuccessClose" class="mt-sale-success-close" aria-label="Close">×</button>
     <div class="mt-success-check">✓</div>
-    <h2>Sale completed</h2>
+    <h2 id="saleSuccessTitle">Sale completed</h2>
     <p id="saleSuccessNumber"></p>
     <strong id="saleSuccessChange"></strong>
     <div class="mt-modal-actions">
@@ -105,12 +110,12 @@
       <button id="saleDone" class="mt-btn mt-btn-primary">New sale</button>
     </div>
   </div>
-</div>
+</dialog>
 
-<div class="mt-modal-backdrop" id="posRegisterCloseModal" hidden>
+<dialog class="mt-pos-dialog" id="posRegisterCloseModal" aria-labelledby="posRegisterCloseTitle">
   <div class="mt-modal">
     <div class="mt-modal-icon">▣</div>
-    <h3>Close register?</h3>
+    <h3 id="posRegisterCloseTitle">Close register?</h3>
     <p>Count the physical cash in the drawer. Closing the register ends this cashier session.</p>
     <form id="posRegisterCloseForm" class="mt-form-stack">
       <label>Actual cash counted
@@ -122,8 +127,9 @@
       </div>
     </form>
   </div>
-</div>
+</dialog>
 
-<div class="mt-modal-backdrop" id="confirmModal" hidden><div class="mt-modal"><h3 id="confirmTitle">Clear sale?</h3><p id="confirmMessage">Remove all items from this sale?</p><div class="mt-modal-actions"><button type="button" class="mt-btn mt-btn-secondary" id="confirmCancel">Cancel</button><button type="button" class="mt-btn mt-btn-danger" id="confirmAccept">Clear sale</button></div></div></div>
+<dialog class="mt-pos-dialog" id="posConfirm" aria-labelledby="posConfirmTitle" aria-describedby="posConfirmMessage"><div class="mt-modal"><h3 id="posConfirmTitle">Clear sale?</h3><p id="posConfirmMessage">Remove all items from this sale?</p><div class="mt-modal-actions"><button type="button" class="mt-btn mt-btn-secondary" id="posConfirmCancel" autofocus>Cancel</button><button type="button" class="mt-btn mt-btn-danger" id="posConfirmAccept">Clear sale</button></div></div></dialog>
 
-<script src="/js/pos.js?v=20261007-2"></script>
+<script src="/js/pos-state.js?v=20261007-4"></script>
+<script src="/js/pos.js?v=20261007-4"></script>

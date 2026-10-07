@@ -1,12 +1,16 @@
 async function openRegister(db,userId,branchId){const {rows}=await db.query(`SELECT rs.*,r.name register_name FROM register_sessions rs JOIN registers r ON r.id=rs.register_id WHERE rs.user_id=$1 AND rs.branch_id=$2 AND rs.status='OPEN' LIMIT 1`,[userId,branchId]);return rows[0]||null;}
-async function search(db,organizationId,branchId,q){
+async function search(db,organizationId,branchId,q,options={}){
   const query=String(q||'').trim();
   const term=`%${query}%`;
   const prefix=`${query}%`;
 
   const {rows}=await db.query(
     `SELECT
-       m.id,m.name,m.generic_name,m.brand_name,m.strength,m.default_selling_price,m.image_path,
+       m.id,m.name,m.generic_name,m.brand_name,m.strength,m.default_selling_price,m.image_path,m.category_id,
+       COUNT(*) OVER() total_count,
+       COALESCE((SELECT jsonb_agg(jsonb_build_object('id',mu.id,'name',mu.name,
+         'conversion_to_base',mu.conversion_to_base,'selling_price',mu.selling_price) ORDER BY mu.id)
+         FROM medicine_units mu WHERE mu.medicine_id=m.id AND mu.active=true),'[]'::jsonb) packages,
        c.name category,u.name unit_name,u.symbol unit,COALESCE(u.allow_fraction,false) allow_fraction,
        1::numeric conversion_to_base,NULL::bigint medicine_unit_id,NULL::varchar sale_unit_name,NULL::numeric sale_unit_price,
        COALESCE(SUM(b.quantity_available) FILTER(
@@ -32,6 +36,8 @@ async function search(db,organizationId,branchId,q){
      LEFT JOIN medicine_batches b ON b.medicine_id=m.id AND b.branch_id=$2
      WHERE m.organization_id=$1
        AND m.active=true
+       AND ($6::bigint IS NULL OR m.category_id=$6 OR ($6=-1 AND m.category_id IS NULL))
+       AND ($10::bigint[] IS NULL OR m.id=ANY($10))
        AND (
          $3='' OR
          m.name ILIKE $4 OR
@@ -42,15 +48,28 @@ async function search(db,organizationId,branchId,q){
          EXISTS(SELECT 1 FROM medicine_units mu WHERE mu.medicine_id=m.id AND mu.active=true AND mu.barcode ILIKE $4)
        )
      GROUP BY m.id,c.id,u.id
+     HAVING NOT $7::boolean OR COALESCE(SUM(b.quantity_available) FILTER(
+       WHERE b.status='SALEABLE' AND b.quantity_available>0
+         AND (b.expiry_date IS NULL OR b.expiry_date>=current_date)),0)>0
      ORDER BY relevance,
        (COALESCE(SUM(b.quantity_available) FILTER(
          WHERE b.status='SALEABLE' AND b.quantity_available>0
            AND (b.expiry_date IS NULL OR b.expiry_date>=current_date)
        ),0)>0) DESC,
-       m.name
-     LIMIT 25`,
-    [organizationId,branchId,query,term,prefix]
+       m.name,m.id
+     LIMIT $8 OFFSET $9`,
+    [organizationId,branchId,query,term,prefix,options.categoryId??null,
+      !!options.stockOnly,options.limit??25,options.offset??0,options.ids??null]
   );
+  return rows;
+}
+async function categories(db,organizationId){
+  const {rows}=await db.query(`SELECT c.id,c.name FROM categories c
+    WHERE c.organization_id=$1 AND EXISTS(SELECT 1 FROM medicines m
+      WHERE m.organization_id=$1 AND m.category_id=c.id AND m.active=true)
+    UNION ALL SELECT -1,'Uncategorized' WHERE EXISTS(SELECT 1 FROM medicines
+      WHERE organization_id=$1 AND active=true AND category_id IS NULL)
+    ORDER BY name`,[organizationId]);
   return rows;
 }
 async function lockBatches(db,medicineId,branchId){const {rows}=await db.query(`SELECT id,quantity_available,expiry_date,unit_cost FROM medicine_batches WHERE medicine_id=$1 AND branch_id=$2 AND quantity_available>0 AND status='SALEABLE' AND (expiry_date IS NULL OR expiry_date>=current_date) ORDER BY expiry_date NULLS LAST,received_at,id FOR UPDATE`,[medicineId,branchId]);return rows;}
@@ -64,4 +83,4 @@ async function allocateBatch(db,saleItemId,batchId,qty,cost){await db.query('INS
 async function movement(db,batchId,medicineId,ctx,qty,cost,saleId){await db.query(`INSERT INTO stock_movements(organization_id,branch_id,medicine_id,batch_id,movement_type,quantity,unit_cost,reference_type,reference_id,performed_by) VALUES($1,$2,$3,$4,'SALE',$5,$6,'SALE',$7,$8)`,[ctx.organizationId,ctx.branchId,medicineId,batchId,-qty,cost,saleId,ctx.userId]);}
 async function payment(db,saleId,sessionId,userId,p){const {rows}=await db.query(`INSERT INTO sale_payments(sale_id,register_session_id,payment_method,amount,reference,created_by) VALUES($1,$2,$3,$4,$5,$6) RETURNING *`,[saleId,sessionId,p.method,p.amount,p.reference||null,userId]);return rows[0];}
 async function registerCash(db,sessionId,amount,saleId,userId){if(amount<=0)return;await db.query(`INSERT INTO register_movements(register_session_id,movement_type,amount,reference_type,reference_id,performed_by) VALUES($1,'CASH_SALE',$2,'SALE',$3,$4)`,[sessionId,amount,saleId,userId]);}
-module.exports={openRegister,search,lockBatches,medicine,medicineUnit,customer,recent,createSale,createItem,allocateBatch,movement,payment,registerCash};
+module.exports={openRegister,search,categories,lockBatches,medicine,medicineUnit,customer,recent,createSale,createItem,allocateBatch,movement,payment,registerCash};
