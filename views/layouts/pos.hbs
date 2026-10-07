@@ -12,9 +12,11 @@
   <link rel="icon" href="/images/meditill-icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/images/meditill-icon.svg">
   <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/pos.css?v=20261007-2">
+  <script src="/js/pos-fullscreen.js?v=20261007-1"></script>
   <title>{{title}} | MediTill</title>
 </head>
-<body class="mt-pos-body">
+<body class="mt-pos-body mt-terminal">
   <div id="toastHost" class="mt-toast-host" aria-live="polite" aria-atomic="true"></div>
 
   <header class="mt-pos-appbar">
@@ -29,10 +31,11 @@
     </div>
 
     <div class="mt-pos-appbar-actions">
+      <button type="button" class="mt-pos-fullscreen-toggle" data-pos-fullscreen-toggle aria-label="Enter fullscreen" title="Enter fullscreen" aria-pressed="false" hidden><img src="/images/maximize.svg" alt="" width="20" height="20"></button>
       {{#if (canAny user "purchase.view" "inventory.view" "inventory.transfer" "inventory.stock_count" "reports.sales" "reports.profit" "reports.inventory" "reports.purchases" "users.manage" "roles.manage" "settings.manage" "branches.manage")}}
       <a href="/" class="mt-btn mt-btn-secondary">Back office</a>
       {{/if}}
-      {{#if (can user "register.close")}}<button type="button" id="posCloseRegister" class="mt-btn mt-btn-danger">Close register</button>{{/if}}
+      {{#if (can user "register.close")}}<button type="button" id="posCloseRegister" class="mt-btn mt-btn-danger" aria-label="Close register" title="Close register"><img src="/images/door-closed.svg" alt="" width="18" height="18"><span>Close register</span></button>{{/if}}
       <a href="/logout" class="mt-btn mt-btn-secondary">Logout</a>
     </div>
   </header>

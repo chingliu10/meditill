@@ -827,6 +827,14 @@ button.mt-status{cursor:pointer}
 .mt-pos-brand>span:last-child{display:grid;line-height:1.15}.mt-pos-brand strong{font-size:14px}.mt-pos-brand small{font-size:10px;color:var(--mt-muted);margin-top:2px}
 .mt-pos-appbar-session{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:700;color:#475569}
 .mt-pos-appbar-actions{display:flex;align-items:center;gap:8px}
+.mt-pos-fullscreen-toggle{width:38px;height:38px;flex:none;display:inline-flex;align-items:center;justify-content:center;padding:0;border:1px solid var(--mt-border);border-radius:6px;background:#fff;cursor:pointer}
+.mt-pos-fullscreen-toggle[hidden]{display:none}
+.mt-pos-fullscreen-toggle:hover{background:#edf8f5;border-color:var(--mt-primary)}
+.mt-pos-fullscreen-toggle:focus-visible{outline:2px solid var(--mt-primary);outline-offset:2px}
+.mt-pos-takeover-open{overflow:hidden!important}
+.mt-pos-takeover{position:fixed;inset:0;z-index:10000;width:100%;height:100%;background:#eef3f6}
+.mt-pos-takeover:fullscreen{width:100vw;height:100dvh}
+.mt-pos-takeover iframe{display:block;width:100%;height:100%;border:0}
 .mt-pos-shell{height:calc(100vh - 66px);padding:12px;max-width:none;margin:0}
 .mt-pos-fullscreen{height:100%;min-height:0;display:block}
 .mt-pos-fullscreen .mt-pos-grid{height:100%;min-height:0}

@@ -16,11 +16,19 @@
   const mobileCartTotal=document.querySelector('#mobileCartTotal');
   const mobileCartClose=document.querySelector('#mobileCartClose');
   const mobileCartBackdrop=document.querySelector('#mobileCartBackdrop');
+  const categories=document.querySelector('#posCategories');
+  const inStockOnly=document.querySelector('#inStockOnly');
+  const clearCart=document.querySelector('#posClearCart');
+  const completeSale=document.querySelector('#completeSale');
 
   const cart=new Map();
   let timer,customerTimer;
   let productSearchController=null;
   let customerSearchController=null;
+  let catalogProducts=[];
+  let activeCategory='';
+  let replacePayment=true;
+  let saleInFlight=false;
 
   const money=n=>'TZS '+Number(n||0).toLocaleString('en-TZ',{maximumFractionDigits:2});
   const notify=(text,type='success',duration=3500)=>window.MediTillToast?.(text,type,duration);
@@ -47,7 +55,7 @@
     let total=0,count=0;
 
     if(!cart.size){
-      cartLines.innerHTML='<div class="mt-empty-state">Scan or tap a medicine to begin.</div>';
+      cartLines.innerHTML='<div class="mt-empty-state">No items</div>';
     }
 
     for(const item of cart.values()){
@@ -61,10 +69,10 @@
           <strong>${esc(item.name)}</strong>
           <small>${money(item.salePrice)} / ${esc(item.saleUnitName)} · Stock ${Number(item.stock/item.conversion).toLocaleString('en-TZ',{maximumFractionDigits:4})} ${esc(item.saleUnitName)}</small>
           <div class="mt-qty">
-            <button type="button" class="minus">−</button>
+            <button type="button" class="minus" aria-label="Decrease quantity" title="Decrease quantity">&minus;</button>
             <span>${item.saleQty}</span>
-            <button type="button" class="plus">+</button>
-            <button type="button" class="remove">×</button>
+            <button type="button" class="plus" aria-label="Increase quantity" title="Increase quantity">+</button>
+            <button type="button" class="remove" aria-label="Remove medicine" title="Remove medicine">&times;</button>
           </div>
         </div>
         <b>${money(item.saleQty*item.salePrice)}</b>`;
@@ -96,13 +104,18 @@
     totalEl.textContent=money(total);
     const itemLabel=Number(count.toFixed(4))===1?'1 item':`${Number(count.toFixed(4))} items`;
     countEl.textContent=itemLabel;
+    document.querySelector('#paymentItemCount').textContent=itemLabel;
     if(mobileCartCount)mobileCartCount.textContent=itemLabel;
     if(mobileCartTotal)mobileCartTotal.textContent=money(total);
     payAmount.value=total||'';
+    replacePayment=true;
+    clearCart.disabled=!cart.size||saleInFlight;
+    completeSale.disabled=!cart.size||saleInFlight;
     updateChange();
   }
 
   function add(item){
+    if(saleInFlight)return;
     const conversion=Number(item.conversion_to_base||1);
     const unitId=item.medicine_unit_id?Number(item.medicine_unit_id):null;
     const key=unitId?`${item.id}:u${unitId}`:`${item.id}:base`;
@@ -136,18 +149,43 @@
     }
 
     renderCart();
-    notify((item.name+(item.strength?' '+item.strength:''))+' added to cart','success',1400);
     input.value='';
     focusSearch();
   }
 
   function showProducts(list){
+    catalogProducts=list;
+    const names=[...new Set(list.map(item=>item.category).filter(Boolean))].sort();
+    if(!names.includes(activeCategory))activeCategory='';
+    categories.replaceChildren();
+    ['',...names].forEach(name=>{
+      const button=document.createElement('button');
+      button.type='button';
+      button.textContent=name||'All medicines';
+      button.dataset.category=name;
+      button.onclick=()=>{activeCategory=name;renderProducts();};
+      categories.appendChild(button);
+    });
+    renderProducts();
+  }
+
+  function renderProducts(){
     products.innerHTML='';
+    categories.querySelectorAll('button').forEach(button=>{
+      const selected=button.dataset.category===activeCategory;
+      button.classList.toggle('is-active',selected);
+      button.setAttribute('aria-pressed',String(selected));
+    });
+    const list=catalogProducts.filter(item=>(!activeCategory||item.category===activeCategory)&&(!inStockOnly.checked||Number(item.stock)>0));
+    document.querySelector('#posProductCount').textContent=list.length===1?'1 medicine':`${list.length} medicines`;
+    if(!list.length)products.innerHTML='<div class="mt-empty-state">No medicines found</div>';
 
     for(const item of list){
       const card=document.createElement('button');
       card.type='button';
       card.className='mt-pos-product';
+      card.title=[item.name,item.strength].filter(Boolean).join(' ');
+      card.disabled=Number(item.stock)<=0;
       card.innerHTML=`<img src="${esc(item.image_path||'/images/default-medicine.svg')}" onerror="this.src='/images/default-medicine.svg'">
         <span class="mt-pos-product-name">${esc(item.name)} ${esc(item.strength||'')}</span>
         <small>${esc(item.generic_name||'')}</small>
@@ -205,15 +243,66 @@
     timer=setTimeout(()=>search(input.value).catch(error=>{if(error.name!=='AbortError')notify(error.message,'error');}),350);
   });
 
+  inStockOnly.addEventListener('change',renderProducts);
+  document.querySelector('#posClearSearch').addEventListener('click',()=>{
+    clearTimeout(timer);
+    input.value='';
+    activeCategory='';
+    search('').catch(error=>{if(error.name!=='AbortError')notify(error.message,'error');});
+    focusSearch();
+  });
+
+  clearCart.addEventListener('click',async()=>{
+    if(saleInFlight||!cart.size)return;
+    if(!await window.MediTillConfirm({title:'Clear sale?',message:'Remove all items from this sale?'}))return;
+    if(saleInFlight)return;
+    cart.clear();
+    customerId.value='';
+    customerSearch.value='';
+    customerResults.classList.remove('is-open');
+    renderCart();
+    focusSearch();
+  });
+
   document.querySelectorAll('[data-method]').forEach(button=>{
     button.onclick=()=>{
       document.querySelectorAll('[data-method]').forEach(item=>item.classList.toggle('is-active',item===button));
       paymentMethod.value=button.dataset.method;
+      if(paymentMethod.value!=='CASH'){
+        payAmount.value=cartTotal()||'';
+        replacePayment=true;
+      }
+      document.querySelectorAll('[data-cash-amount]').forEach(preset=>{preset.disabled=paymentMethod.value!=='CASH';});
       updateChange();
     };
   });
 
-  payAmount?.addEventListener('input',updateChange);
+  payAmount?.addEventListener('input',()=>{replacePayment=false;updateChange();});
+  document.querySelector('#posExactAmount').addEventListener('click',()=>{
+    payAmount.value=cartTotal()||'';
+    replacePayment=true;
+    updateChange();
+  });
+  document.querySelectorAll('[data-cash-amount]').forEach(button=>{
+    button.onclick=()=>{payAmount.value=button.dataset.cashAmount;replacePayment=true;updateChange();};
+  });
+  document.querySelectorAll('[data-pay-key]').forEach(button=>{
+    button.onclick=()=>{
+      const key=button.dataset.payKey;
+      let value=payAmount.value;
+      if(key==='backspace')value=value.slice(0,-1);
+      else{
+        if(replacePayment)value='';
+        if(key==='.'&&value.includes('.'))return;
+        if(value.length>=12||(value.includes('.')&&value.split('.')[1].length>=2))return;
+        value=(value==='0'&&key!=='.'?'':value)+key;
+        if(value==='.')value='0.';
+      }
+      replacePayment=false;
+      payAmount.value=value;
+      updateChange();
+    };
+  });
 
   customerSearch?.addEventListener('input',()=>{
     customerId.value='';
@@ -251,15 +340,20 @@
     },350);
   });
 
-  let saleInFlight=false;
-
   document.querySelector('#completeSale')?.addEventListener('click',async()=>{
     if(saleInFlight)return;
     if(!cart.size)return notify('Cart is empty','warning');
+    const received=Number(payAmount.value);
+    const total=cartTotal();
+    if(!Number.isFinite(received)||received<total)return notify('Amount received is below the amount due','warning');
+    if(paymentMethod.value!=='CASH'&&received!==total)return notify('Non-cash payment must match the amount due','warning');
 
     const button=document.querySelector('#completeSale');
     const originalText=button.textContent;
     saleInFlight=true;
+    ['#posCart','.mt-pos-catalog','.mt-payment-box'].forEach(selector=>{document.querySelector(selector).inert=true;});
+    button.setAttribute('aria-busy','true');
+    clearCart.disabled=true;
     button.disabled=true;
     button.textContent='Processing...';
 
@@ -302,12 +396,15 @@
 
       cart.clear();
       renderCart();
-      search('');
+      search('').catch(error=>{if(error.name!=='AbortError')notify(error.message,'error');});
     }catch(error){
       notify(error.message||'Sale failed','error');
     }finally{
       saleInFlight=false;
-      button.disabled=false;
+      ['#posCart','.mt-pos-catalog','.mt-payment-box'].forEach(selector=>{document.querySelector(selector).inert=false;});
+      button.removeAttribute('aria-busy');
+      button.disabled=!cart.size;
+      clearCart.disabled=!cart.size;
       button.textContent=originalText;
     }
   });
