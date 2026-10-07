@@ -11,11 +11,17 @@ function safeReturnPath(value){
 
 async function index(req,res,next){
   try{
-    const [registers,current,lastClosed]=await Promise.all([
+    let [registers,current,lastClosed]=await Promise.all([
       repo.registers(pool,req.branch.id),
       repo.current(pool,req.session.user.id,req.branch.id),
       repo.latestClosed(pool,req.session.user.id,req.branch.id)
     ]);
+
+    if(!registers.some(register=>register.active===true)){
+      await repo.ensureDefaultRegister(pool,req.branch.id);
+      registers=await repo.registers(pool,req.branch.id);
+    }
+
     let expectedCash=null;
     if(current) expectedCash=await repo.expectedCash(pool,current.id);
     const activeRegisters=registers.filter(register=>register.active===true);
