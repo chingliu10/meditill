@@ -69,8 +69,8 @@ async function update(req,res,next){
 
       const previousBranchId=Number(req.session.currentBranch?.id);
       const currentBranch=
-        branches.find(branch=>Number(branch.id)===previousBranchId) ||
         branches.find(branch=>Number(branch.id)===Number(context.default_branch_id)) ||
+        branches.find(branch=>Number(branch.id)===previousBranchId) ||
         branches[0];
 
       req.session.user=context;
