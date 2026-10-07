@@ -102,6 +102,29 @@ npm start
 
 Seed username: `admin`.
 
+## Report demo data
+
+In an existing migrated test database, run this from `psql`:
+
+```sql
+\i /home/true/apps/meditill/database/seed-report-demo.sql
+```
+
+The file targets organization `1`; edit `target_org` to select another organization.
+It adds 40 medicines with barcodes and box units, 40 customers, and 20 suppliers.
+Every active branch receives 40 purchases, 50 sales, 20 expired batches, 30 expenses,
+20 sale returns, 20 purchase returns, 20 adjustments, 20 completed stock counts,
+and 50 closed register sessions. With multiple branches, it also adds 20 outgoing
+received transfers per branch. Batches include low stock, depleted stock, upcoming
+expiry, quarantine, damage, and recall examples. Transactions span the last month.
+
+Two demo cashiers per branch are named `demo_1_b<BRANCH_ID>_cashier_1` and
+`demo_1_b<BRANCH_ID>_cashier_2` (the first number is the organization ID).
+They use the existing active owner's password and have access to their own branch.
+Existing users, open register sessions, and stock are preserved. The file runs in
+one transaction, verifies the stock ledger, and skips a previously seeded organization
+when run again. It uses the database you connected to and does not change app configuration.
+
 ## Existing server deployment
 
 For the current Solidus Logic deployment:
