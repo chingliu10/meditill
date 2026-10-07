@@ -1,7 +1,13 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
 const state=require('../../public/js/pos-state');
 const repo=require('../../src/modules/pos/pos.repository');
+test('POS no longer reads or renders the separate strength field',()=>{
+  const source=fs.readFileSync(path.join(__dirname,'../../public/js/pos.js'),'utf8');
+  assert.doesNotMatch(source,/\.strength\b|mt-product-strength|mt-cart-strength|Strength not specified/);
+});
 const line={key:'1:base',id:1,conversion:1,saleQty:1,stock:12,allowFraction:false};
 test('cash entered by cashier survives quantity and price changes',()=>{
   assert.equal(state.paymentValue(2000,'5000',true,'CASH'),'5000');

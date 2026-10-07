@@ -99,7 +99,7 @@
         method:paymentMethod.value,amount:Number.isFinite(Number(payAmount.value))&&Number(payAmount.value)>=0?payAmount.value:'',edited:paymentEdited,pending:checkoutPending,
         customerId:customerId.value?Number(customerId.value):null,
         items:[...cart.values()].map(item=>({id:item.id,unitId:item.medicineUnitId,qty:item.saleQty,
-          price:item.salePrice,name:item.name,strength:item.strength||'',unitName:item.saleUnitName}))}));
+          price:item.salePrice,name:item.name,unitName:item.saleUnitName}))}));
     }catch(error){
       if(!storageFailed)notify('Draft recovery is unavailable in this browser. Keep this sale open.','warning',6000);
       storageFailed=true;
@@ -135,7 +135,7 @@
       row.className='mt-cart-line';
       row.innerHTML=`<img src="${esc(item.image||'/images/default-medicine.svg')}" onerror="this.src='/images/default-medicine.svg'">
         <div class="mt-cart-line-main">
-          <strong>${esc(item.name)}</strong><span class="mt-cart-strength">${esc(item.strength||'')}</span>
+          <strong>${esc(item.name)}</strong>
           <small>${money(item.salePrice)} / ${esc(item.saleUnitName)} · Stock ${Number(item.stock/item.conversion).toLocaleString('en-TZ',{maximumFractionDigits:4})} ${esc(item.saleUnitName)}</small>
           <div class="mt-qty">
             <button type="button" class="minus" aria-label="Decrease quantity" title="Decrease quantity">&minus;</button>
@@ -219,7 +219,6 @@
         id:Number(item.id),
         medicineUnitId:unitId,
         name:item.name,
-        strength:item.strength||'',
         salePrice,
         saleQty:increment,
         conversion,
@@ -247,11 +246,10 @@
     for(const item of list){
       const card=document.createElement('article');
       card.className='mt-medicine-tile';
-      card.title=[item.name,item.strength].filter(Boolean).join(' ');
-      card.innerHTML=`<button type="button" class="mt-product-add" aria-label="Add ${esc(item.name)} ${esc(item.strength||'')}">
+      card.title=item.name;
+      card.innerHTML=`<button type="button" class="mt-product-add" aria-label="Add ${esc(item.name)}">
         <img src="${esc(item.image_path||'/images/default-medicine.svg')}" alt="" onerror="this.src='/images/default-medicine.svg'">
         <span class="mt-pos-product-name">${esc(item.name)}</span>
-        <span class="mt-product-strength">${esc(item.strength||'Strength not specified')}</span>
         <small>${esc(item.generic_name||'')}</small>
         <strong class="mt-product-price"></strong><span class="mt-product-stock"></span></button>
         <span class="mt-product-unit-label">${esc(item.unit_name||'Unit')}</span>`;
@@ -261,7 +259,7 @@
       card.querySelector('.mt-product-price').textContent=money(item.default_selling_price);
       card.querySelector('.mt-product-stock').textContent=`${stock.toLocaleString('en-TZ',{maximumFractionDigits:2})} ${unitName} in stock`;
       button.disabled=stock<(item.allow_fraction?.1:1);
-      button.setAttribute('aria-label',`Add ${item.name} ${item.strength||''}, ${unitName}`);
+      button.setAttribute('aria-label',`Add ${item.name}, ${unitName}`);
       button.onclick=()=>add(item);
       products.appendChild(card);
     }
@@ -644,7 +642,7 @@
         if(price!==saved.price)priceChanged=true;
         const key=saved.unitId?`${saved.id}:u${saved.unitId}`:`${saved.id}:base`;
         cart.set(key,{key,id:saved.id,medicineUnitId:saved.unitId,name:med?.name||saved.name||'Unavailable medicine',
-          strength:med?.strength||saved.strength,saleQty:saved.qty,salePrice:price,conversion,stock:Number(med?.stock||0),
+          saleQty:saved.qty,salePrice:price,conversion,stock:Number(med?.stock||0),
           allowFraction:saved.unitId===null&&!!med?.allow_fraction,saleUnitName:unit?.name||med?.unit_name||saved.unitName||'Unit',
           image:med?.image_path,unavailable});
       }
