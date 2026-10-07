@@ -22,6 +22,18 @@ async function registers(db,branchId){
   }));
 }
 
+async function ensureDefaultRegister(db,branchId){
+  const {rows}=await db.query(
+    `INSERT INTO registers(branch_id,name,active)
+     VALUES($1,'Register 1',true)
+     ON CONFLICT(branch_id,name)
+     DO UPDATE SET active=true
+     RETURNING id,name,active`,
+    [branchId]
+  );
+  return rows[0]||null;
+}
+
 async function createRegister(db,branchId,name){
   const {rows}=await db.query(
     'INSERT INTO registers(branch_id,name) VALUES($1,$2) RETURNING *',
@@ -151,6 +163,7 @@ async function latestClosed(db,userId,branchId){
 
 module.exports={
   registers,
+  ensureDefaultRegister,
   createRegister,
   findRegister,
   openSession,
