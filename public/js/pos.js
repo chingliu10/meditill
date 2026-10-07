@@ -254,33 +254,15 @@
         <span class="mt-product-strength">${esc(item.strength||'Strength not specified')}</span>
         <small>${esc(item.generic_name||'')}</small>
         <strong class="mt-product-price"></strong><span class="mt-product-stock"></span></button>
-        ${(item.packages||[]).length
-          ?`<select class="mt-product-unit" aria-label="Selling unit for ${esc(item.name)}"><option value="">${esc(item.unit_name||'Unit')}</option></select>`
-          :`<span class="mt-product-unit-label">${esc(item.unit_name||'Unit')}</span>`}`;
-      const units=card.querySelector('select');
-      (item.packages||[]).forEach(unit=>{
-        const option=document.createElement('option');
-        option.value=unit.id;
-        option.textContent=`${unit.name} (${Number(unit.conversion_to_base)} ${item.unit_name||'units'})`;
-        units.appendChild(option);
-      });
+        <span class="mt-product-unit-label">${esc(item.unit_name||'Unit')}</span>`;
       const button=card.querySelector('button');
-      let selected=item;
-      const selectUnit=()=>{
-        const unit=(item.packages||[]).find(unit=>String(unit.id)===units?.value);
-        const conversion=Number(unit?.conversion_to_base||1);
-        selected={...item,medicine_unit_id:unit?.id||null,conversion_to_base:conversion,
-          sale_unit_name:unit?.name||item.unit_name||'Unit',
-          sale_unit_price:unit?(unit.selling_price==null?Number(item.default_selling_price)*conversion:Number(unit.selling_price)):null};
-        card.querySelector('.mt-product-price').textContent=money(selected.sale_unit_price??item.default_selling_price);
-        const stock=Number(item.stock)/conversion;
-        card.querySelector('.mt-product-stock').textContent=`${stock.toLocaleString('en-TZ',{maximumFractionDigits:2})} ${selected.sale_unit_name} in stock`;
-        button.disabled=stock<(unit||!item.allow_fraction?1:.1);
-        button.setAttribute('aria-label',`Add ${item.name} ${item.strength||''}, ${selected.sale_unit_name}`);
-      };
-      if(units)units.onchange=selectUnit;
-      selectUnit();
-      button.onclick=()=>add(selected);
+      const unitName=item.unit_name||'Unit';
+      const stock=Number(item.stock);
+      card.querySelector('.mt-product-price').textContent=money(item.default_selling_price);
+      card.querySelector('.mt-product-stock').textContent=`${stock.toLocaleString('en-TZ',{maximumFractionDigits:2})} ${unitName} in stock`;
+      button.disabled=stock<(item.allow_fraction?.1:1);
+      button.setAttribute('aria-label',`Add ${item.name} ${item.strength||''}, ${unitName}`);
+      button.onclick=()=>add(item);
       products.appendChild(card);
     }
   }

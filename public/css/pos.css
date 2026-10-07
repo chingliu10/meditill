@@ -106,7 +106,6 @@
 .mt-product-add>small{grid-column:1/-1;font-size:12px;line-height:1.4;overflow-wrap:anywhere;color:#54656e}
 .mt-product-price{grid-column:1/-1;font-size:15px;line-height:1.4;overflow-wrap:anywhere}
 .mt-product-stock{grid-column:1/-1;font-size:12px;color:#455d64;line-height:1.4;overflow-wrap:anywhere}
-.mt-product-unit{height:44px;min-height:44px;width:calc(100% - 16px);margin:0 8px 8px;border:1px solid #b8c9d1;border-radius:4px;padding:6px;font-size:13px;background:#fff;color:#263746}
 .mt-product-unit-label{display:block;padding:6px 12px 12px;font-size:13px;color:#54656e;line-height:1.4;overflow-wrap:anywhere}
 .mt-catalog-pages{display:flex;justify-content:center;align-items:center;gap:12px;flex:none;min-height:52px;font-size:13px}
 .mt-catalog-pages button{width:44px;height:44px;border:1px solid #b8c9d1;border-radius:4px;background:#fff;font-size:22px;cursor:pointer}
