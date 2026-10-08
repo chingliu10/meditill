@@ -157,6 +157,22 @@ Existing users, open register sessions, and stock are preserved. The file runs i
 one transaction, verifies the stock ledger, and skips a previously seeded organization
 when run again. It uses the database you connected to and does not change app configuration.
 
+## Medicine name cleanup
+
+Preview organization 1 first, then apply the cleanup:
+
+```bash
+npm run db:clean-medicine-names -- 1
+npm run db:clean-medicine-names -- 1 --apply
+```
+
+The script uses `DATABASE_URL` and prints the connected database and server.
+It removes only a leading `Demo -` marker from `medicines.name` in the selected
+organization, including inactive medicines. IDs, stock, prices, SKUs, barcodes,
+generic names, brands, categories, units, customers, suppliers, and transactions
+are unchanged. It does not merge records with matching names. Changes are made
+in one transaction, and running it again on the report seed data has no effect.
+
 ## Existing server deployment
 
 For the current Solidus Logic deployment:
